@@ -45,7 +45,7 @@ function SetConfigurationWindow()
 	delayEditBox:SetSize(25,30)
 	delayEditBox:SetMultiLine(false)
     delayEditBox:ClearAllPoints()
-	delayEditBox:SetPoint("TOPLEFT",40,-150)
+	delayEditBox:SetPoint("TOPLEFT", 25, -100)
 	delayEditBox:SetCursorPosition(0);
 	delayEditBox:ClearFocus();
     delayEditBox:SetAutoFocus(false)
@@ -62,34 +62,49 @@ function SetConfigurationWindow()
 	delayEditBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	delayEditBoxLabel:SetWidth(120)
 	delayEditBoxLabel:SetHeight(20)
-	delayEditBoxLabel:SetPoint("TOPLEFT", 20, -150)
+	delayEditBoxLabel:SetPoint("TOPLEFT", -10, 15)
 	delayEditBoxLabel:SetTextColor(1, 0.8196079, 0)
 	delayEditBoxLabel:SetShadowOffset(1, -1)
 	delayEditBoxLabel:SetShadowColor(0, 0, 0)
 	delayEditBoxLabel:SetText("Delay in seconds")
 
-	local editBox = CreateFrame("EditBox", "Input_GratwurstMessage", Gratwurst.ui.panel, "InputBoxTemplate")
-	editBox:SetSize(500,30)
+
+	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
+	backdropFrame:SetPoint("TOPLEFT", 20,-150)
+	backdropFrame:SetSize(335, 215)
+	backdropFrame:SetBackdrop( {
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
+        tile = true,
+        tileSize = 12,
+        edgeSize = 8,
+        insets = { left = 5, right = 3, top = 3, bottom = 3	},
+	})
+
+
+	local scrollFrame = CreateFrame("ScrollFrame", nil, backdropFrame, "UIPanelScrollFrameTemplate")
+	scrollFrame:SetAlpha(0.8)
+	scrollFrame:SetSize(300,200)
+	scrollFrame:SetPoint("TOPLEFT", 7, -7)
+	
+	local editBox = CreateFrame("EditBox", "Input_GratwurstMessage", scrollFrame)
 	editBox:SetMultiLine(true)
-    editBox:ClearAllPoints()
-	editBox:SetPoint("TOPLEFT",40,-180)
-	editBox:SetCursorPosition(0);
-	editBox:ClearFocus();
-    editBox:SetAutoFocus(false)
+	editBox:SetAutoFocus(false)
+	editBox:SetFontObject(ChatFontNormal)
 	editBox:SetScript("OnShow", function(self,event,arg1)
 		self:SetText(GratwurstMessage)
-		self:SetCursorPosition(0);
-		self:ClearFocus();
 	end)
 	editBox:SetScript("OnTextChanged", function(self,value)
 		GratwurstMessage = self:GetText()
 	end)
+	editBox:SetWidth(300)
+	scrollFrame:SetScrollChild(editBox)
 
-	local editBoxLabel = editBox:CreateFontString("editBoxLabel")
+	local editBoxLabel = backdropFrame:CreateFontString("editBoxLabel")
 	editBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	editBoxLabel:SetWidth(120)
 	editBoxLabel:SetHeight(20)
-	editBoxLabel:SetPoint("TOPLEFT", 20, -94)
+	editBoxLabel:SetPoint("TOPLEFT", -17 ,20)
 	editBoxLabel:SetTextColor(1, 0.8196079, 0)
 	editBoxLabel:SetShadowOffset(1, -1)
 	editBoxLabel:SetShadowColor(0, 0, 0)
