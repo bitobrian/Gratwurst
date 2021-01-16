@@ -7,9 +7,6 @@ on:
         description: 'Addon version'
         required: true
 
-env:
-  CLASSIC_VERSION: 11306
-
 jobs:
   package:
     name: Create zips and tag
