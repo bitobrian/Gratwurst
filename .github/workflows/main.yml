@@ -20,7 +20,7 @@ jobs:
       run: |
         addon_name=$(ls *.toc)
         addon_name=$(basename $addon_name .toc)
-        tag_name=${addon_name}-release${{github.event.inputs.version}}
+        tag_name=${addon_name}-release-v${{github.event.inputs.version}}
         echo "::set-output name=addon_name::${addon_name}"
         echo "::set-output name=tag_name::${tag_name}"
 
