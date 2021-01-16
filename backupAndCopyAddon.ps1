@@ -28,6 +28,6 @@ New-Item -Path $backupAddonPath -Name $dateTimeNow -ItemType "directory"
 Copy-Item -Path $allWowAddonFiles -Destination $backupAddonPathDateTime -Recurse
 
 # Copy over source
-Copy-Item -Path ".\Retail\*" -Destination $addonPath -Recurse
+Copy-Item -Path "Gratwurst.*"  -Destination $addonPath | Where-Object { ! $_.PSIsContainer }
 
 # Start-Process -FilePath "C:\Program Files (x86)\World of Warcraft\_retail_\Wow.exe"
