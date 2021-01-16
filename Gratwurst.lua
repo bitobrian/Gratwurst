@@ -9,6 +9,10 @@ function InitializeAddon(self)
 		GratwurstDelayInSeconds = 3;
 	end
 
+	if(GratwurstEnabled == nil) then
+		GratwurstEnabled = true;
+	end
+
 	SetConfigurationWindow();
 end
 
@@ -35,6 +39,22 @@ function SetConfigurationWindow()
 	Gratwurst.ui = {};
 	Gratwurst.ui.panel = luaFrame
 	Gratwurst.ui.panel.name = "Gratwurst";
+
+	local isEnabledCheckButton = CreateFrame("CheckButton", "IsEnabledCheckButton", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate");
+	isEnabledCheckButton:SetPoint("TOPLEFT", 20, -50);
+	getglobal(isEnabledCheckButton:GetName() .. 'Text'):SetText("Enabled");
+	isEnabledCheckButton:SetScript("OnShow",
+		function(self, event, arg1)
+			self:SetChecked(GratwurstEnabled);
+		end);
+	isEnabledCheckButton:SetScript("OnClick",
+		function()
+			if (GratwurstEnabled) then
+				GratwurstEnabled = false;
+			else
+				GratwurstEnabled = true;
+			end
+		end);
 
 	-- GratwurstDelayInSeconds
 	local delayEditBox = CreateFrame("EditBox", "Input_GratwurstDelayInSeconds", Gratwurst.ui.panel, "InputBoxTemplate")
@@ -117,7 +137,7 @@ end
 function GuildAchievementMessageEventRecieved()
 	gratsStop=true
     C_Timer.After(GratwurstDelayInSeconds,function()
-        if gratsStop then
+        if gratsStop and GratwurstEnabled then
 			gratsStop=false			
 			SendChatMessage(GetRandomMessageFromList(),"GUILD")
         end
@@ -153,3 +173,30 @@ function GetTableSize(t)
     end
     return count
 end
+
+----------
+-- Slash
+----------
+
+SLASH_GRATWURST1, SLASH_GRATWURST2 = '/gw', '/gratwurst';
+
+local function slashcmd(msg, editbox)
+	if (msg =="") then
+		if (GratwurstEnabled) then
+			DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r Status: Enabled\n")
+		else
+			DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r Status: Disabled\n")
+		end
+		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r Slash commands:")
+		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw enable   -> Enable Gratwurst")
+		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw disable  -> Disable Gratwurst")
+	elseif (msg == "enable") then
+		GratwurstEnabled = true;
+		print("Gratwurst enabled.");
+	elseif (msg == "disable") then
+		GratwurstEnabled = false;
+		print("Gratwurst disabled.");
+	end
+end
+
+SlashCmdList["GRATWURST"] = slashcmd
