@@ -1,6 +1,5 @@
 function InitializeAddon(self)
     self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
-    self:RegisterEvent("CHAT_MSG_SAY")
 	
     if(GratwurstMessage == nil)then
 		GratwurstMessage="";
@@ -111,8 +110,7 @@ function SetConfigurationWindow()
 end
 
 function OnEventRecieved(event, arg1, arg2, ...)
-	if(arg1 == "CHAT_MSG_SAY")then GuildAchievementMessageEventRecieved();
-	-- if(arg1 == "CHAT_MSG_GUILD_ACHIEVEMENT")then GuildAchievementMessageEventRecieved();
+	if(arg1 == "CHAT_MSG_GUILD_ACHIEVEMENT")then GuildAchievementMessageEventRecieved();
 	end
 end
 
