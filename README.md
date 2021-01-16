@@ -5,7 +5,7 @@ Yet another auto congrats addon for World of Warcraft.
 
 - [x] Input and save grats message
 - [x] Set and save delay
-- [ ] Choose from randomized string list
+- [x] Choose from randomized string list
 
 ## Usage
 
