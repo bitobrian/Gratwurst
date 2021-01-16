@@ -1,12 +1,9 @@
 function InitializeAddon(self)
     self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
+    -- self:RegisterEvent("CHAT_MSG_SAY")
 	
     if(GratwurstMessage == nil)then
 		GratwurstMessage="eat my shorts";
-	end
-
-	if(GuildIsEnabled == nil)then
-		GuildIsEnabled = true;
 	end
 
 	if(GratwurstDelayInSeconds == nil)then
@@ -114,12 +111,9 @@ function SetConfigurationWindow()
 end
 
 function OnEventRecieved(event, arg1, arg2, ...)
-	if(event == "CHAT_MSG_GUILD_ACHIEVEMENT")then Log("CHAT_MSG_GUILD_ACHIEVEMENT on event");
-	end	
-	if(arg1 == "CHAT_MSG_GUILD_ACHIEVEMENT")then Log("CHAT_MSG_GUILD_ACHIEVEMENT on arg1");
-	end	
-	-- if(arg1 == "CHAT_MSG_GUILD_ACHIEVEMENT")then GuildAchievementMessageEventRecieved();
-	-- end	
+	-- if(arg1 == "CHAT_MSG_SAY")then Log(arg1);
+	if(arg1 == "CHAT_MSG_GUILD_ACHIEVEMENT")then GuildAchievementMessageEventRecieved();
+	end
 end
 
 function GuildAchievementMessageEventRecieved()
@@ -127,24 +121,15 @@ function GuildAchievementMessageEventRecieved()
     C_Timer.After(GratwurstDelayInSeconds,function()
         if gratsStop then
 			gratsStop=false
-			GetRandomMessageFromList()
-			-- SendChatMessage(GratwurstMessage,"GUILD")
+			-- GetRandomMessageFromList()
+			SendChatMessage(GratwurstMessage,"GUILD")
 			Log(GratwurstMessage)
         end
     end)
 end
 
 function GetRandomMessageFromList()
-	-- TODO: do randomize logic here
 	GratwurstMessage = "tacos1111"
-end
-
-function ToggleGuildAchievementsEnabled()
-	if(GuildIsEnabled) then GuildIsEnabled = false;
-	else GuildIsEnabled = true;
-	end;
-	Log("Toggle clicked.")
-	Gratwurst.ui.guildCheckButton:SetChecked(GuildIsEnabled);
 end
 
 function Log(message)
