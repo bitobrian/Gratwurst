@@ -1,9 +1,9 @@
 function InitializeAddon(self)
     self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
-    -- self:RegisterEvent("CHAT_MSG_SAY")
+    self:RegisterEvent("CHAT_MSG_SAY")
 	
     if(GratwurstMessage == nil)then
-		GratwurstMessage="eat my shorts";
+		GratwurstMessage="";
 	end
 
 	if(GratwurstDelayInSeconds == nil)then
@@ -111,8 +111,8 @@ function SetConfigurationWindow()
 end
 
 function OnEventRecieved(event, arg1, arg2, ...)
-	-- if(arg1 == "CHAT_MSG_SAY")then Log(arg1);
-	if(arg1 == "CHAT_MSG_GUILD_ACHIEVEMENT")then GuildAchievementMessageEventRecieved();
+	if(arg1 == "CHAT_MSG_SAY")then GuildAchievementMessageEventRecieved();
+	-- if(arg1 == "CHAT_MSG_GUILD_ACHIEVEMENT")then GuildAchievementMessageEventRecieved();
 	end
 end
 
@@ -120,20 +120,38 @@ function GuildAchievementMessageEventRecieved()
 	gratsStop=true
     C_Timer.After(GratwurstDelayInSeconds,function()
         if gratsStop then
-			gratsStop=false
-			-- GetRandomMessageFromList()
-			SendChatMessage(GratwurstMessage,"GUILD")
-			Log(GratwurstMessage)
+			gratsStop=false			
+			SendChatMessage(GetRandomMessageFromList(),"GUILD")
         end
     end)
 end
 
 function GetRandomMessageFromList()
-	GratwurstMessage = "tacos1111"
+	local table = lines(GratwurstMessage)
+	local index = GetTableSize(table)
+	local value = math.random(1,index)
+	local message = table[value]
+	return message
 end
 
 function Log(message)
 	if(message == nil)then message = "nil";
 	end
 	DEFAULT_CHAT_FRAME:AddMessage(message)
+end
+
+function lines(str)
+	local result = {}
+	for line in str:gmatch '[^\n]+' do
+	  table.insert(result, line)
+	end
+	return result
+end
+
+function GetTableSize(t)
+    local count = 0
+    for _, __ in pairs(t) do
+        count = count + 1
+    end
+    return count
 end
