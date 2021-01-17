@@ -1,6 +1,5 @@
 function InitializeAddon(self)
 	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
-	self:RegisterEvent("CHAT_MSG_SAY")
 	
     if(GratwurstMessage == nil)then
 		GratwurstMessage="";
@@ -17,8 +16,6 @@ function InitializeAddon(self)
 	if (GratwurstUnitName == nil) then
 		GratwurstUnitName = strjoin("-", UnitName("player"), GetRealmName())
 	end;
-
-	Log(GratwurstUnitName);
 
 	SetConfigurationWindow();
 end
