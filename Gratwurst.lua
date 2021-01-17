@@ -1,5 +1,5 @@
 function InitializeAddon(self)
-    self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
+	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
 	
     if(GratwurstMessage == nil)then
 		GratwurstMessage="";
@@ -12,6 +12,10 @@ function InitializeAddon(self)
 	if(GratwurstEnabled == nil) then
 		GratwurstEnabled = true;
 	end
+
+	if (GratwurstUnitName == nil) then
+		GratwurstUnitName = strjoin("-", UnitName("player"), GetRealmName())
+	end;
 
 	SetConfigurationWindow();
 end
@@ -97,12 +101,11 @@ function SetConfigurationWindow()
         insets = { left = 5, right = 3, top = 3, bottom = 3	},
 	})
 
-
 	local scrollFrame = CreateFrame("ScrollFrame", nil, backdropFrame, "UIPanelScrollFrameTemplate")
 	scrollFrame:SetAlpha(0.8)
 	scrollFrame:SetSize(300,200)
 	scrollFrame:SetPoint("TOPLEFT", 7, -7)
-	
+
 	local editBox = CreateFrame("EditBox", "Input_GratwurstMessage", scrollFrame)
 	editBox:SetMultiLine(true)
 	editBox:SetAutoFocus(false)
@@ -114,7 +117,7 @@ function SetConfigurationWindow()
 		GratwurstMessage = self:GetText()
 	end)
 	editBox:SetWidth(300)
-	scrollFrame:SetScrollChild(editBox)
+	scrollFrame:SetScrollChild(editBox)	
 
 	local editBoxLabel = backdropFrame:CreateFontString("editBoxLabel")
 	editBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
@@ -129,15 +132,18 @@ function SetConfigurationWindow()
 	InterfaceOptions_AddCategory(Gratwurst.ui.panel);	
 end
 
-function OnEventRecieved(event, arg1, arg2, ...)
-	if(arg1 == "CHAT_MSG_GUILD_ACHIEVEMENT")then GuildAchievementMessageEventRecieved();
+function OnEventRecieved(self, event, msg, author, ...)
+	if (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then 
+		if (author ~= GratwurstUnitName) then
+			GuildAchievementMessageEventRecieved();
+		end
 	end
 end
 
 function GuildAchievementMessageEventRecieved()
 	gratsStop=true
     C_Timer.After(GratwurstDelayInSeconds,function()
-        if gratsStop and GratwurstEnabled then
+        if gratsStop and GratwurstEnabled and GratwurstMessage ~= "" then
 			gratsStop=false			
 			SendChatMessage(GetRandomMessageFromList(),"GUILD")
         end
