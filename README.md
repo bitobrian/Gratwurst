@@ -26,3 +26,15 @@ PRs are welcome!
 ### Tooling
 
 Any text editor! Feel free to handwrite, scan, and ocr into Notepad!
+
+### Thanks
+
+#### Contributors
+
+- [Server Restart In Podcast Crew](https://www.serverrestartin.com/)!
+
+#### Github Action for packaging
+
+[Vger Blizz Forum Post](https://us.forums.blizzard.com/en/wow/t/creating-addon-releases-with-github-actions/613424)
+
+[Pawn Addon Source](https://github.com/VgerMods/Pawn)
