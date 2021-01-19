@@ -196,6 +196,7 @@ local function slashcmd(msg, editbox)
 		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r Slash commands:")
 		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw enable   -> Enable Gratwurst")
 		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw disable  -> Disable Gratwurst")
+		InterfaceOptionsFrame_OpenToCategory("Gratwurst")
 	elseif (msg == "enable") then
 		GratwurstEnabled = true;
 		print("Gratwurst enabled.");
