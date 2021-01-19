@@ -6,4 +6,6 @@ ignore: # Files and directories beginning with a dot (such as .git) are automati
     - backupAndCopyAddon.ps1
     - README.md
 
+manual-changelog: updates.txt
+
 license-output: LICENSE.txt

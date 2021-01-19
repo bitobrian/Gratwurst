@@ -1,0 +1,1 @@
+1.2.6 - Add "/gw c" command to open configuration window. Official changelog.
