@@ -27,7 +27,7 @@ jobs:
     - name: Make folder for zips
       run: |
         mkdir -p .releases/${{steps.init.outputs.addon_name}}
-        rsync -a --include=${{steps.init.outputs.addon_name}} --include="LICENSE" --exclude="*" . .releases/${{steps.init.outputs.addon_name}}
+        rsync -auz --include "*/" --include=${{steps.init.outputs.addon_name}}* --include="LICENSE" --exclude="*" . .releases/${{steps.init.outputs.addon_name}}
 
     - name: Create retail zip
       run: |
