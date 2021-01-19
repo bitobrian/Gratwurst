@@ -1,0 +1,9 @@
+package-as: Gratwurst
+enable-nolib-creation: no
+
+ignore: # Files and directories beginning with a dot (such as .git) are automatically ignored, as is the pgkmeta file itself.
+    - media
+    - backupAndCopyAddon.ps1
+    - README.md
+
+license-output: LICENSE.txt
