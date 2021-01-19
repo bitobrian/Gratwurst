@@ -27,7 +27,10 @@ jobs:
     - name: Make folder for zips
       run: |
         mkdir -p .releases/${{steps.init.outputs.addon_name}}
-        rsync -auz --include "*/" --include=${{steps.init.outputs.addon_name}}* --include="LICENSE" --exclude="*" . .releases/${{steps.init.outputs.addon_name}}
+        cp ${{steps.init.outputs.addon_name}}.lua .releases/${{steps.init.outputs.addon_name}}
+        cp ${{steps.init.outputs.addon_name}}.toc .releases/${{steps.init.outputs.addon_name}}
+        cp ${{steps.init.outputs.addon_name}}.xml .releases/${{steps.init.outputs.addon_name}}
+        cp LICENSE .releases/${{steps.init.outputs.addon_name}}        
 
     - name: Create retail zip
       run: |
