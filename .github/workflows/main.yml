@@ -30,7 +30,6 @@ jobs:
         cp ${{steps.init.outputs.addon_name}}.lua .releases/${{steps.init.outputs.addon_name}}
         cp ${{steps.init.outputs.addon_name}}.toc .releases/${{steps.init.outputs.addon_name}}
         cp ${{steps.init.outputs.addon_name}}.xml .releases/${{steps.init.outputs.addon_name}}
-        cp LICENSE .releases/${{steps.init.outputs.addon_name}}        
 
     - name: Create retail zip
       run: |
