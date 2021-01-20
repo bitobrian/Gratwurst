@@ -1,5 +1,5 @@
 # Gratwurst
-Yet another auto congrats addon for World of Warcraft.
+A delicious automatic congratulations messaging addon for World of Warcraft.
 
 ## Features
 
