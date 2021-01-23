@@ -1,5 +1,6 @@
 function InitializeAddon(self)
 	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
+	self:RegisterEvent("PLAYER_LOGIN")
 	
     if(GratwurstMessage == nil)then
 		GratwurstMessage="";
@@ -12,11 +13,7 @@ function InitializeAddon(self)
 	if(GratwurstEnabled == nil) then
 		GratwurstEnabled = true;
 	end
-
-	if (GratwurstUnitName == nil) then
-		GratwurstUnitName = strjoin("-", UnitName("player"), strjoin("", strsplit(" ", GetRealmName())))
-	end;
-
+	
 	SetConfigurationWindow();
 end 
 
@@ -142,7 +139,11 @@ function SetConfigurationWindow()
 end
 
 function OnEventRecieved(self, event, msg, author, ...)
-	if (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then 
+	if (event == "PLAYER_LOGIN") then
+		if (GratwurstUnitName == nil or strfind(GratwurstUnitName, " ")) then
+			GratwurstUnitName = strjoin("-", UnitName("player"), GetNormalizedRealmName())
+		end;
+	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then 
 		if (author ~= GratwurstUnitName) then
 			GuildAchievementMessageEventRecieved();
 		end
