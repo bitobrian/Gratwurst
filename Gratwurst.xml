@@ -6,7 +6,7 @@
 				InitializeAddon(self);
 			</OnLoad>
 			<OnEvent>
-				OnEventRecieved(self, event, ...);
+				OnEventReceived(self, event, ...);
 			</OnEvent>
 		</Scripts>
 	</Frame>

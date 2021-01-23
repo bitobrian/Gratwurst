@@ -1,28 +1,16 @@
 function InitializeAddon(self)
 	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
 	self:RegisterEvent("PLAYER_LOGIN")
-	
-    if(GratwurstMessage == nil)then
-		GratwurstMessage="";
-	end
-	
-	if(GratwurstDelayInSeconds == nil)then
-		GratwurstDelayInSeconds = 3;
-	end
-
-	if(GratwurstRandomDelayMax == nil)then
-		-- Updating from old value to new one
-		GratwurstRandomDelayMax = GratwurstDelayInSeconds;
-	end
-
-	if(GratwurstEnabled == nil) then
-		GratwurstEnabled = true;
-	end
-
-	GratwurstRandomDelayEnabled = true;
-	
-	SetConfigurationWindow();
+	self:RegisterEvent("ADDON_LOADED")
 end 
+
+function InitializeSavedVariables(self)
+	GratwurstMessage = GratwurstMessage or ""
+	GratwurstDelayInSeconds = GratwurstDelayInSeconds or 3
+	GratwurstRandomDelayMax = GratwurstRandomDelayMax or GratwurstDelayInSeconds
+	GratwurstEnabled = GratwurstEnabled or true
+	GratwurstRandomDelayEnabled = true;
+end
 
 function SetConfigurationWindow()
 	local luaFrame = CreateFrame("Frame", "GratwurstPanel", InterfaceOptionsFramePanelContainer)
@@ -133,6 +121,7 @@ function SetConfigurationWindow()
 	maxDelayEditBox:SetCursorPosition(0);
 	maxDelayEditBox:ClearFocus();
     maxDelayEditBox:SetAutoFocus(false)
+	maxDelayEditBox:Insert(GratwurstRandomDelayMax)
 	maxDelayEditBox:SetScript("OnShow", function(self,event,arg1)
 		self:SetNumber(GratwurstRandomDelayMax)
 		self:SetCursorPosition(0);
@@ -174,6 +163,7 @@ function SetConfigurationWindow()
 	editBox:SetMultiLine(true)
 	editBox:SetAutoFocus(false)
 	editBox:SetFontObject(ChatFontNormal)
+	editBox:Insert(GratwurstMessage)
 	editBox:SetScript("OnShow", function(self,event,arg1)
 		self:SetText(GratwurstMessage)
 	end)
@@ -196,19 +186,23 @@ function SetConfigurationWindow()
 	InterfaceOptions_AddCategory(Gratwurst.ui.panel);	
 end
 
-function OnEventRecieved(self, event, msg, author, ...)
+function OnEventReceived(self, event, msg, author, ...)
 	if (event == "PLAYER_LOGIN") then
 		if (GratwurstUnitName == nil or strfind(GratwurstUnitName, " ")) then
 			GratwurstUnitName = strjoin("-", UnitName("player"), GetNormalizedRealmName())
 		end;
 	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then 
 		if (author ~= GratwurstUnitName) then
-			GuildAchievementMessageEventRecieved();
+			GuildAchievementMessageEventReceived();
 		end
+	elseif (event == "ADDON_LOADED" and msg == "Gratwurst") then
+		InitializeSavedVariables();
+		SetConfigurationWindow();
+		self:UnregisterEvent("ADDON_LOADED");
 	end
 end
 
-function GuildAchievementMessageEventRecieved()
+function GuildAchievementMessageEventReceived()
 	gratsStop=true
 	if GratwurstRandomDelayEnabled then
 		-- TODO: Make a slider for this instead of checking
