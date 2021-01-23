@@ -14,11 +14,11 @@ function InitializeAddon(self)
 	end
 
 	if (GratwurstUnitName == nil) then
-		GratwurstUnitName = strjoin("-", UnitName("player"), GetRealmName())
+		GratwurstUnitName = strjoin("-", UnitName("player"), strjoin("", strsplit(" ", GetRealmName())))
 	end;
 
 	SetConfigurationWindow();
-end
+end 
 
 function SetConfigurationWindow()
 	local luaFrame = CreateFrame("Frame", "GratwurstPanel", InterfaceOptionsFramePanelContainer)
