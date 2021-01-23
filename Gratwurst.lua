@@ -46,7 +46,6 @@ function SetConfigurationWindow()
 
 	local isEnabledCheckButton = CreateFrame("CheckButton", "IsEnabledCheckButton", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate");
 	isEnabledCheckButton:SetPoint("TOPLEFT", 20, -50);
-	getglobal(isEnabledCheckButton:GetName() .. 'Text'):SetText("Enabled");
 	isEnabledCheckButton:SetScript("OnShow",
 		function(self, event, arg1)
 			self:SetChecked(GratwurstEnabled);
@@ -59,6 +58,16 @@ function SetConfigurationWindow()
 				GratwurstEnabled = true;
 			end
 		end);
+		
+	local isEnabledCheckButtonLabel = isEnabledCheckButton:CreateFontString("isEnabledCheckButtonLabel")
+	isEnabledCheckButtonLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	isEnabledCheckButtonLabel:SetWidth(120)
+	isEnabledCheckButtonLabel:SetHeight(20)
+	isEnabledCheckButtonLabel:SetPoint("TOPLEFT", -31, 15)
+	isEnabledCheckButtonLabel:SetTextColor(1, 0.8196079, 0)
+	isEnabledCheckButtonLabel:SetShadowOffset(1, -1)
+	isEnabledCheckButtonLabel:SetShadowColor(0, 0, 0)
+	isEnabledCheckButtonLabel:SetText("Enabled")
 
 	-- GratwurstDelayInSeconds
 	local delayEditBox = CreateFrame("EditBox", "Input_GratwurstDelayInSeconds", Gratwurst.ui.panel, "InputBoxTemplate")
