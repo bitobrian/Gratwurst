@@ -13,6 +13,10 @@ function InitializeAddon(self)
 	if(GratwurstEnabled == nil) then
 		GratwurstEnabled = true;
 	end
+
+	if(GratwurstRandomTTTEnabled == nil) then
+		GratwurstRandomTTTEnabled = true;
+	end
 	
 	SetConfigurationWindow();
 end 
@@ -41,6 +45,7 @@ function SetConfigurationWindow()
 	Gratwurst.ui.panel = luaFrame
 	Gratwurst.ui.panel.name = "Gratwurst";
 
+	-- Control - IsEnabled CheckBox
 	local isEnabledCheckButton = CreateFrame("CheckButton", "IsEnabledCheckButton", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate");
 	isEnabledCheckButton:SetPoint("TOPLEFT", 20, -50);
 	isEnabledCheckButton:SetScript("OnShow",
@@ -66,12 +71,38 @@ function SetConfigurationWindow()
 	isEnabledCheckButtonLabel:SetShadowColor(0, 0, 0)
 	isEnabledCheckButtonLabel:SetText("Enabled")
 
-	-- GratwurstDelayInSeconds
+	-- Control - Randomize Time To Talk CheckBox
+	local isRandomTTTCheckButton = CreateFrame("CheckButton", "IsRandomTTTCheckButton", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate");
+	isRandomTTTCheckButton:SetPoint("TOPLEFT", 20, -100);
+	isRandomTTTCheckButton:SetScript("OnShow",
+		function(self, event, arg1)
+			self:SetChecked(GratwurstRandomTTTEnabled);
+		end);
+	isRandomTTTCheckButton:SetScript("OnClick",
+		function()
+			if (GratwurstRandomTTTEnabled) then
+				GratwurstRandomTTTEnabled = false;
+			else
+				GratwurstRandomTTTEnabled = true;
+			end
+		end);
+		
+	local isRandomTTTCheckButtonLabel = isRandomTTTCheckButton:CreateFontString("isRandomTTTCheckButtonLabel")
+	isRandomTTTCheckButtonLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	isRandomTTTCheckButtonLabel:SetWidth(120)
+	isRandomTTTCheckButtonLabel:SetHeight(20)
+	isRandomTTTCheckButtonLabel:SetPoint("TOPLEFT", -31, 15)
+	isRandomTTTCheckButtonLabel:SetTextColor(1, 0.8196079, 0)
+	isRandomTTTCheckButtonLabel:SetShadowOffset(1, -1)
+	isRandomTTTCheckButtonLabel:SetShadowColor(0, 0, 0)
+	isRandomTTTCheckButtonLabel:SetText("Random Delay")
+
+	-- Control - GratwurstDelayInSeconds
 	local delayEditBox = CreateFrame("EditBox", "Input_GratwurstDelayInSeconds", Gratwurst.ui.panel, "InputBoxTemplate")
 	delayEditBox:SetSize(25,30)
 	delayEditBox:SetMultiLine(false)
     delayEditBox:ClearAllPoints()
-	delayEditBox:SetPoint("TOPLEFT", 25, -100)
+	delayEditBox:SetPoint("TOPLEFT", 25, -150)
 	delayEditBox:SetCursorPosition(0);
 	delayEditBox:ClearFocus();
     delayEditBox:SetAutoFocus(false)
@@ -96,7 +127,7 @@ function SetConfigurationWindow()
 
 
 	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
-	backdropFrame:SetPoint("TOPLEFT", 20,-150)
+	backdropFrame:SetPoint("TOPLEFT", 20,-200)
 	backdropFrame:SetSize(335, 215)
 	backdropFrame:SetBackdrop( {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -152,6 +183,9 @@ end
 
 function GuildAchievementMessageEventRecieved()
 	gratsStop=true
+	if GratwurstRandomTTTEnabled then
+		GratwurstDelayInSeconds = math.random(1,4)
+	end
     C_Timer.After(GratwurstDelayInSeconds,function()
         if gratsStop and GratwurstEnabled and GratwurstMessage ~= "" then
 			gratsStop=false			

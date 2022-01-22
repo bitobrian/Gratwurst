@@ -4,6 +4,6 @@
 ## Title: Gratwurst
 ## Version: 1.0.1
 ## DefaultState: Enabled
-## SavedVariablesPerCharacter: GratwurstMessage, GratwurstDelayInSeconds, GratwurstEnabled, GratwurstUnitName
+## SavedVariablesPerCharacter: GratwurstMessage, GratwurstDelayInSeconds, GratwurstEnabled, GratwurstUnitName, GratwurstRandomTTTEnabled
 Gratwurst.lua
 Gratwurst.xml
