@@ -1,5 +1,5 @@
 ## Author: Bitobrian, Galiagante 
-## Interface: 90100
+## Interface: 90105
 ## Notes: Automatically send congrats for achievements in chat.
 ## Title: Gratwurst
 ## Version: 1.0.1
