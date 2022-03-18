@@ -1,9 +1,9 @@
 ## Author: Bitobrian, Galiagante 
-## Interface: 90105
+## Interface: 90200
 ## Notes: Automatically send congrats for achievements in chat.
 ## Title: Gratwurst
 ## Version: 1.0.1
 ## DefaultState: Enabled
-## SavedVariablesPerCharacter: GratwurstMessage, GratwurstDelayInSeconds, GratwurstEnabled, GratwurstUnitName, GratwurstRandomTTTEnabled
+## SavedVariablesPerCharacter: GratwurstMessage, GratwurstDelayInSeconds, GratwurstEnabled, GratwurstUnitName, GratwurstRandomDelayEnabled, GratwurstRandomDelayMax
 Gratwurst.lua
 Gratwurst.xml
