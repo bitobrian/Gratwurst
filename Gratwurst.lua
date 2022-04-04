@@ -1,11 +1,15 @@
 function InitializeAddon(self)
 	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
 	self:RegisterEvent("PLAYER_LOGIN")
-	
+
+	-- Seed rng at init for potential same time in chat
+	-- Since each char logs in differently, this should be best case
+	GratwurstRngSeed = time();
+
     if(GratwurstMessage == nil)then
 		GratwurstMessage="";
 	end
-	
+
 	if(GratwurstDelayInSeconds == nil)then
 		GratwurstDelayInSeconds = 3;
 	end
@@ -20,20 +24,20 @@ function InitializeAddon(self)
 	end
 
 	GratwurstRandomDelayEnabled = true;
-	
+
 	SetConfigurationWindow();
-end 
+end
 
 function SetConfigurationWindow()
 	local luaFrame = CreateFrame("Frame", "GratwurstPanel", InterfaceOptionsFramePanelContainer)
-	
+
 	local titleBorder = luaFrame:CreateTexture("UnneccessaryGlobalFrameNameTitleBorder")
 	titleBorder:SetWidth(320)
 	titleBorder:SetHeight(50)
 	titleBorder:SetPoint("TOP", luaFrame, "TOP", 0, 5)
 	titleBorder:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
 	titleBorder:SetTexCoord(.2, .8, 0, .6)
-	
+
 	local titleString = luaFrame:CreateFontString("UnneccessaryGlobalFrameNameTitleString")
 	titleString:SetFont("Fonts\\FRIZQT__.TTF", 15)
 	titleString:SetWidth(320)
@@ -63,7 +67,7 @@ function SetConfigurationWindow()
 	-- 			GratwurstEnabled = true;
 	-- 		end
 	-- 	end);
-		
+
 	-- local isEnabledCheckButtonLabel = isEnabledCheckButton:CreateFontString("isEnabledCheckButtonLabel")
 	-- isEnabledCheckButtonLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	-- isEnabledCheckButtonLabel:SetWidth(120)
@@ -89,7 +93,7 @@ function SetConfigurationWindow()
 	-- 			GratwurstRandomDelayEnabled = true;
 	-- 		end
 	-- 	end);
-		
+
 	-- local isRandomTTTCheckButtonLabel = isRandomTTTCheckButton:CreateFontString("isRandomTTTCheckButtonLabel")
 	-- isRandomTTTCheckButtonLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	-- isRandomTTTCheckButtonLabel:SetWidth(120)
@@ -141,7 +145,7 @@ function SetConfigurationWindow()
 	maxDelayEditBox:SetScript("OnTextChanged", function(self,value)
 		GratwurstRandomDelayMax = self:GetNumber()
 	end)
-	
+
 	local maxDelayEditBoxLabel = maxDelayEditBox:CreateFontString("maxDelayEditBoxLabel")
 	maxDelayEditBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	maxDelayEditBoxLabel:SetWidth(250)
@@ -181,7 +185,7 @@ function SetConfigurationWindow()
 		GratwurstMessage = self:GetText()
 	end)
 	editBox:SetWidth(300)
-	scrollFrame:SetScrollChild(editBox)	
+	scrollFrame:SetScrollChild(editBox)
 
 	local editBoxLabel = backdropFrame:CreateFontString("editBoxLabel")
 	editBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
@@ -193,7 +197,7 @@ function SetConfigurationWindow()
 	editBoxLabel:SetShadowColor(0, 0, 0)
 	editBoxLabel:SetText("Gratz List (one message per line)")
 
-	InterfaceOptions_AddCategory(Gratwurst.ui.panel);	
+	InterfaceOptions_AddCategory(Gratwurst.ui.panel);
 end
 
 function OnEventRecieved(self, event, msg, author, ...)
@@ -201,7 +205,7 @@ function OnEventRecieved(self, event, msg, author, ...)
 		if (GratwurstUnitName == nil or strfind(GratwurstUnitName, " ")) then
 			GratwurstUnitName = strjoin("-", UnitName("player"), GetNormalizedRealmName())
 		end;
-	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then 
+	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then
 		if (author ~= GratwurstUnitName) then
 			GuildAchievementMessageEventRecieved();
 		end
@@ -209,6 +213,8 @@ function OnEventRecieved(self, event, msg, author, ...)
 end
 
 function GuildAchievementMessageEventRecieved()
+	-- Doesn't work. randomseed is blocked in wow.
+	-- math.randomseed(GratwurstRngSeed)
 	gratsStop=true
 	if GratwurstRandomDelayEnabled then
 		-- TODO: Make a slider for this instead of checking
@@ -222,7 +228,7 @@ function GuildAchievementMessageEventRecieved()
 	end
     C_Timer.After(GratwurstDelayInSeconds,function()
         if gratsStop and GratwurstEnabled and GratwurstMessage ~= "" then
-			gratsStop=false			
+			gratsStop=false
 			SendChatMessage(GetRandomMessageFromList(),"GUILD")
         end
     end)
