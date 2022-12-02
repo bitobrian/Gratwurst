@@ -10,6 +10,8 @@ function InitializeSavedVariables(self)
 	GratwurstRandomDelayMax = GratwurstRandomDelayMax or GratwurstDelayInSeconds
 	GratwurstEnabled = GratwurstEnabled or true
 	GratwurstRandomDelayEnabled = true;
+	GratwurstShouldVary = GratwurstShouldVary or false;
+	GratwurstVariancePercentage = GratwurstVariancePercentage or 50;
 end
 
 function SetConfigurationWindow()
@@ -204,6 +206,12 @@ end
 
 function GuildAchievementMessageEventReceived()
 	gratsStop=true
+	local canGrats = false
+	if GratwurstShouldVary then
+		if math.random(1, 100) <= GratwurstVariancePercentage then
+			canGrats = true
+		end
+	end
 	if GratwurstRandomDelayEnabled then
 		-- TODO: Make a slider for this instead of checking
 		if GratwurstRandomDelayMax < 1 then
@@ -215,7 +223,7 @@ function GuildAchievementMessageEventReceived()
 		GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
 	end
     C_Timer.After(GratwurstDelayInSeconds,function()
-        if gratsStop and GratwurstEnabled and GratwurstMessage ~= "" then
+        if gratsStop and GratwurstEnabled and GratwurstMessage and canGrats ~= "" then
 			gratsStop=false			
 			SendChatMessage(GetRandomMessageFromList(),"GUILD")
         end
