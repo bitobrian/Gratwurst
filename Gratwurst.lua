@@ -2,7 +2,7 @@ function InitializeAddon(self)
 	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
 	self:RegisterEvent("PLAYER_LOGIN")
 	self:RegisterEvent("ADDON_LOADED")
-end 
+end
 
 function InitializeSavedVariables(self)
 	GratwurstMessage = GratwurstMessage or ""
@@ -16,14 +16,14 @@ end
 
 function SetConfigurationWindow()
 	local luaFrame = CreateFrame("Frame", "GratwurstPanel", InterfaceOptionsFramePanelContainer)
-	
+
 	local titleBorder = luaFrame:CreateTexture("UnneccessaryGlobalFrameNameTitleBorder")
 	titleBorder:SetWidth(320)
 	titleBorder:SetHeight(50)
 	titleBorder:SetPoint("TOP", luaFrame, "TOP", 0, 5)
 	titleBorder:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
 	titleBorder:SetTexCoord(.2, .8, 0, .6)
-	
+
 	local titleString = luaFrame:CreateFontString("UnneccessaryGlobalFrameNameTitleString")
 	titleString:SetFont("Fonts\\FRIZQT__.TTF", 15)
 	titleString:SetWidth(320)
@@ -37,83 +37,6 @@ function SetConfigurationWindow()
 	Gratwurst.ui = {};
 	Gratwurst.ui.panel = luaFrame
 	Gratwurst.ui.panel.name = "Gratwurst";
-
-	-- Control - IsEnabled CheckBox
-	-- local isEnabledCheckButton = CreateFrame("CheckButton", "IsEnabledCheckButton", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate");
-	-- isEnabledCheckButton:SetPoint("TOPLEFT", 20, -50);
-	-- isEnabledCheckButton:SetScript("OnShow",
-	-- 	function(self, event, arg1)
-	-- 		self:SetChecked(GratwurstEnabled);
-	-- 	end);
-	-- isEnabledCheckButton:SetScript("OnClick",
-	-- 	function()
-	-- 		if (GratwurstEnabled) then
-	-- 			GratwurstEnabled = false;
-	-- 		else
-	-- 			GratwurstEnabled = true;
-	-- 		end
-	-- 	end);
-		
-	-- local isEnabledCheckButtonLabel = isEnabledCheckButton:CreateFontString("isEnabledCheckButtonLabel")
-	-- isEnabledCheckButtonLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	-- isEnabledCheckButtonLabel:SetWidth(120)
-	-- isEnabledCheckButtonLabel:SetHeight(20)
-	-- isEnabledCheckButtonLabel:SetPoint("TOPLEFT", -31, 15)
-	-- isEnabledCheckButtonLabel:SetTextColor(1, 0.8196079, 0)
-	-- isEnabledCheckButtonLabel:SetShadowOffset(1, -1)
-	-- isEnabledCheckButtonLabel:SetShadowColor(0, 0, 0)
-	-- isEnabledCheckButtonLabel:SetText("Enabled")
-
-	-- Control - Randomize Time To Talk CheckBox
-	-- local isRandomTTTCheckButton = CreateFrame("CheckButton", "IsRandomTTTCheckButton", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate");
-	-- isRandomTTTCheckButton:SetPoint("TOPLEFT", 20, -100);
-	-- isRandomTTTCheckButton:SetScript("OnShow",
-	-- 	function(self, event, arg1)
-	-- 		self:SetChecked(GratwurstRandomDelayEnabled);
-	-- 	end);
-	-- isRandomTTTCheckButton:SetScript("OnClick",
-	-- 	function()
-	-- 		if (GratwurstRandomDelayEnabled) then
-	-- 			GratwurstRandomDelayEnabled = false;
-	-- 		else
-	-- 			GratwurstRandomDelayEnabled = true;
-	-- 		end
-	-- 	end);
-		
-	-- local isRandomTTTCheckButtonLabel = isRandomTTTCheckButton:CreateFontString("isRandomTTTCheckButtonLabel")
-	-- isRandomTTTCheckButtonLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	-- isRandomTTTCheckButtonLabel:SetWidth(120)
-	-- isRandomTTTCheckButtonLabel:SetHeight(20)
-	-- isRandomTTTCheckButtonLabel:SetPoint("TOPLEFT", -31, 15)
-	-- isRandomTTTCheckButtonLabel:SetTextColor(1, 0.8196079, 0)
-	-- isRandomTTTCheckButtonLabel:SetShadowOffset(1, -1)
-	-- isRandomTTTCheckButtonLabel:SetShadowColor(0, 0, 0)
-	-- isRandomTTTCheckButtonLabel:SetText("Random Delay")
-
-	-- Slider - Gratwurst Max Delay Slider
-	-- local MySlider = CreateFrame("Slider", "GratwurstMaxDelaySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
-	-- MySlider:SetWidth(20)
-	-- MySlider:SetHeight(100)
-	-- MySlider:SetOrientation('HORIZONTAL')
-
-
-	-- Control - GratwurstDelayInSeconds
-	-- local delayEditBox = CreateFrame("EditBox", "Input_GratwurstDelayInSeconds", Gratwurst.ui.panel, "InputBoxTemplate")
-	-- delayEditBox:SetSize(25,30)
-	-- delayEditBox:SetMultiLine(false)
-    -- delayEditBox:ClearAllPoints()
-	-- delayEditBox:SetPoint("TOPLEFT", 25, -150)
-	-- delayEditBox:SetCursorPosition(0);
-	-- delayEditBox:ClearFocus();
-    -- delayEditBox:SetAutoFocus(false)
-	-- delayEditBox:SetScript("OnShow", function(self,event,arg1)
-	-- 	self:SetNumber(GratwurstDelayInSeconds)
-	-- 	self:SetCursorPosition(0);
-	-- 	self:ClearFocus();
-	-- end)
-	-- delayEditBox:SetScript("OnTextChanged", function(self,value)
-	-- 	GratwurstDelayInSeconds = self:GetNumber()
-	-- end)
 
 	local maxDelayEditBox = CreateFrame("EditBox", "Input_GratwurstRandomDelayMax", Gratwurst.ui.panel, "InputBoxTemplate")
 	maxDelayEditBox:SetSize(25,30)
@@ -132,7 +55,7 @@ function SetConfigurationWindow()
 	maxDelayEditBox:SetScript("OnTextChanged", function(self,value)
 		GratwurstRandomDelayMax = self:GetNumber()
 	end)
-	
+
 	local maxDelayEditBoxLabel = maxDelayEditBox:CreateFontString("maxDelayEditBoxLabel")
 	maxDelayEditBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	maxDelayEditBoxLabel:SetWidth(250)
@@ -173,7 +96,7 @@ function SetConfigurationWindow()
 		GratwurstMessage = self:GetText()
 	end)
 	editBox:SetWidth(300)
-	scrollFrame:SetScrollChild(editBox)	
+	scrollFrame:SetScrollChild(editBox)
 
 	local editBoxLabel = backdropFrame:CreateFontString("editBoxLabel")
 	editBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
@@ -185,7 +108,7 @@ function SetConfigurationWindow()
 	editBoxLabel:SetShadowColor(0, 0, 0)
 	editBoxLabel:SetText("Gratz List (one message per line)")
 
-	InterfaceOptions_AddCategory(Gratwurst.ui.panel);	
+	InterfaceOptions_AddCategory(Gratwurst.ui.panel);
 end
 
 function OnEventReceived(self, event, msg, author, ...)
@@ -193,7 +116,7 @@ function OnEventReceived(self, event, msg, author, ...)
 		if (GratwurstUnitName == nil or strfind(GratwurstUnitName, " ")) then
 			GratwurstUnitName = strjoin("-", UnitName("player"), GetNormalizedRealmName())
 		end;
-	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then 
+	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then
 		if (author ~= GratwurstUnitName) then
 			GuildAchievementMessageEventReceived();
 		end
@@ -205,7 +128,7 @@ function OnEventReceived(self, event, msg, author, ...)
 end
 
 function GuildAchievementMessageEventReceived()
-	gratsStop=true
+	local gratsStop = true
 	local canGrats = false
 	if GratwurstShouldVary then
 		if math.random(1, 100) <= GratwurstVariancePercentage then
@@ -224,7 +147,7 @@ function GuildAchievementMessageEventReceived()
 	end
     C_Timer.After(GratwurstDelayInSeconds,function()
         if gratsStop and GratwurstEnabled and GratwurstMessage and canGrats ~= "" then
-			gratsStop=false			
+			gratsStop=false
 			SendChatMessage(GetRandomMessageFromList(),"GUILD")
         end
     end)
