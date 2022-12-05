@@ -66,10 +66,21 @@ function SetConfigurationWindow()
 	maxDelayEditBoxLabel:SetShadowColor(0, 0, 0)
 	maxDelayEditBoxLabel:SetText("Max Delay (up to 9 seconds)")
 
+	local dropDown = CreateFrame("Frame", "VarianceDropDown",  Gratwurst.ui.panel, "UIDropDownMenuTemplate")
+	dropDown:SetPoint("TOPLEFT")
+	UIDropDownMenu_SetWidth(dropDown, 125) -- Use in place of dropDown:SetWidth
+	-- Bind an initializer function to the dropdown; see previous sections for initializer function examples.
+	UIDropDownMenu_Initialize(dropDown, Dropdown_Init)
+	UIDropDownMenu_SetText(dropDown, "How often to reply")
 
+	-- Create the Gratz List control
+	WIDTH_PANEL = 400
+	HEIGHT_PANEL = 300
+
+	-- Create the scroll frame backdrop
 	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
-	backdropFrame:SetPoint("TOPLEFT", 25,-110)
-	backdropFrame:SetSize(335, 215)
+	backdropFrame:SetPoint("CENTER")
+	backdropFrame:SetSize(WIDTH_PANEL, HEIGHT_PANEL)
 	backdropFrame:SetBackdrop( {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
         edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
@@ -79,11 +90,13 @@ function SetConfigurationWindow()
         insets = { left = 5, right = 3, top = 3, bottom = 3	},
 	})
 
+	-- Create the scroll frame 
 	local scrollFrame = CreateFrame("ScrollFrame", nil, backdropFrame, "UIPanelScrollFrameTemplate")
 	scrollFrame:SetAlpha(0.8)
-	scrollFrame:SetSize(300,200)
+	scrollFrame:SetSize(WIDTH_PANEL - 35, HEIGHT_PANEL - 11)
 	scrollFrame:SetPoint("TOPLEFT", 7, -7)
 
+	-- Create the scroll frame edit box
 	local editBox = CreateFrame("EditBox", "Input_GratwurstMessage", scrollFrame)
 	editBox:SetMultiLine(true)
 	editBox:SetAutoFocus(false)
@@ -98,6 +111,7 @@ function SetConfigurationWindow()
 	editBox:SetWidth(300)
 	scrollFrame:SetScrollChild(editBox)
 
+	-- Create the scroll frame label
 	local editBoxLabel = backdropFrame:CreateFontString("editBoxLabel")
 	editBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	editBoxLabel:SetWidth(250)
@@ -146,7 +160,7 @@ function GuildAchievementMessageEventReceived()
 		GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
 	end
     C_Timer.After(GratwurstDelayInSeconds,function()
-        if gratsStop and GratwurstEnabled and GratwurstMessage and canGrats ~= "" then
+        if gratsStop and canGrats and GratwurstEnabled and GratwurstMessage ~= "" then
 			gratsStop=false
 			SendChatMessage(GetRandomMessageFromList(),"GUILD")
         end
@@ -159,6 +173,16 @@ function GetRandomMessageFromList()
 	local value = math.random(1,index)
 	local message = table[value]
 	return message
+end
+
+function Dropdown_Init(frame, level, menuList)
+	local info = UIDropDownMenu_CreateInfo()
+	info.text, info.checked = "75%", true
+	UIDropDownMenu_AddButton(info)
+	info.text, info.checked = "50%", false
+	UIDropDownMenu_AddButton(info)
+	info.text, info.checked = "25%", false
+	UIDropDownMenu_AddButton(info)
 end
 
 function Log(message)
