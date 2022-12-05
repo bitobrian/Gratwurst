@@ -70,16 +70,16 @@ function SetConfigurationWindow()
 	dropDown:SetPoint("TOPLEFT")
 	UIDropDownMenu_SetWidth(dropDown, 125) -- Use in place of dropDown:SetWidth
 	-- Bind an initializer function to the dropdown; see previous sections for initializer function examples.
-	UIDropDownMenu_Initialize(dropDown, Dropdown_Init)
-	UIDropDownMenu_SetText(dropDown, "How often to reply")
+	UIDropDownMenu_Initialize(dropDown, VarianceDropdown_OnInit)
+	UIDropDownMenu_SetText(dropDown, GratwurstVariancePercentage)
 
 	-- Create the Gratz List control
-	WIDTH_PANEL = 400
+	WIDTH_PANEL = 500
 	HEIGHT_PANEL = 300
 
 	-- Create the scroll frame backdrop
 	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
-	backdropFrame:SetPoint("CENTER")
+	backdropFrame:SetPoint("BOTTOM")
 	backdropFrame:SetSize(WIDTH_PANEL, HEIGHT_PANEL)
 	backdropFrame:SetBackdrop( {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -175,13 +175,20 @@ function GetRandomMessageFromList()
 	return message
 end
 
-function Dropdown_Init(frame, level, menuList)
+function VarianceDropdown_OnSelectionChanged(self, arg1, arg2, checked)
+	GratwurstVariancePercentage = arg1
+end
+
+function VarianceDropdown_OnInit(frame, level, menuList)
 	local info = UIDropDownMenu_CreateInfo()
-	info.text, info.checked = "75%", true
+	info.func = VarianceDropdown_OnSelectionChanged
+	info.text, info.checked = "100%", 100
 	UIDropDownMenu_AddButton(info)
-	info.text, info.checked = "50%", false
+	info.text, info.checked = "75%", 75
 	UIDropDownMenu_AddButton(info)
-	info.text, info.checked = "25%", false
+	info.text, info.checked = "50%", 50
+	UIDropDownMenu_AddButton(info)
+	info.text, info.checked = "25%", 25
 	UIDropDownMenu_AddButton(info)
 end
 
