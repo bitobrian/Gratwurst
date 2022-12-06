@@ -38,11 +38,12 @@ function SetConfigurationWindow()
 	Gratwurst.ui.panel = luaFrame
 	Gratwurst.ui.panel.name = "Gratwurst";
 
+	-- Create the max delay  edit box
 	local maxDelayEditBox = CreateFrame("EditBox", "Input_GratwurstRandomDelayMax", Gratwurst.ui.panel, "InputBoxTemplate")
 	maxDelayEditBox:SetSize(25,30)
 	maxDelayEditBox:SetMultiLine(false)
-    maxDelayEditBox:ClearAllPoints()
-	maxDelayEditBox:SetPoint("TOPLEFT", 34, -50)
+    -- maxDelayEditBox:ClearAllPoints()
+	maxDelayEditBox:SetPoint("TOPLEFT", 10, -50)
 	maxDelayEditBox:SetCursorPosition(0);
 	maxDelayEditBox:ClearFocus();
     maxDelayEditBox:SetAutoFocus(false)
@@ -57,21 +58,58 @@ function SetConfigurationWindow()
 	end)
 
 	local maxDelayEditBoxLabel = maxDelayEditBox:CreateFontString("maxDelayEditBoxLabel")
+	maxDelayEditBoxLabel:SetPoint("LEFT", maxDelayEditBox, "RIGHT", 5, 0)
 	maxDelayEditBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	maxDelayEditBoxLabel:SetWidth(250)
+	-- maxDelayEditBoxLabel:SetWidth(250)
 	maxDelayEditBoxLabel:SetHeight(20)
-	maxDelayEditBoxLabel:SetPoint("TOPLEFT", -6, -6)
 	maxDelayEditBoxLabel:SetTextColor(1, 0.8196079, 0)
 	maxDelayEditBoxLabel:SetShadowOffset(1, -1)
 	maxDelayEditBoxLabel:SetShadowColor(0, 0, 0)
 	maxDelayEditBoxLabel:SetText("Max Delay (up to 9 seconds)")
 
-	local dropDown = CreateFrame("Frame", "VarianceDropDown",  Gratwurst.ui.panel, "UIDropDownMenuTemplate")
-	dropDown:SetPoint("TOPLEFT")
-	UIDropDownMenu_SetWidth(dropDown, 125) -- Use in place of dropDown:SetWidth
+	-- Create the varianceDropDown
+	local varianceDropDown = CreateFrame("Frame", "VarianceDropDown",  Gratwurst.ui.panel, "UIDropDownMenuTemplate")
+	varianceDropDown:SetPoint("BOTTOMLEFT", maxDelayEditBox, "BOTTOMLEFT", 0, -15)
+	UIDropDownMenu_SetWidth(varianceDropDown, 125) -- Use in place of dropDown:SetWidth
 	-- Bind an initializer function to the dropdown; see previous sections for initializer function examples.
-	UIDropDownMenu_Initialize(dropDown, VarianceDropdown_OnInit)
-	UIDropDownMenu_SetText(dropDown, GratwurstVariancePercentage)
+	UIDropDownMenu_Initialize(varianceDropDown, VarianceDropdown_OnInit)
+	UIDropDownMenu_SetText(varianceDropDown, GratwurstVariancePercentage)
+
+	local varianceDropDownLabel = varianceDropDown:CreateFontString("varianceDropDownLabel")
+	varianceDropDownLabel:SetPoint("TOPLEFT", varianceDropDown, "TOPLEFT", 0, 5)
+	varianceDropDownLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	varianceDropDownLabel:SetWidth(250)
+	varianceDropDownLabel:SetHeight(20)
+	varianceDropDownLabel:SetTextColor(1, 0.8196079, 0)
+	varianceDropDownLabel:SetShadowOffset(1, -1)
+	varianceDropDownLabel:SetShadowColor(0, 0, 0)
+	varianceDropDownLabel:SetText("Select how often we should gratz")
+
+	-- Create the Max Delay slider
+	local maxDelaySlider = CreateFrame("Slider", "MaxDelaySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
+	maxDelaySlider:SetPoint("TOPLEFT", 34, -45)
+	maxDelaySlider:SetWidth(132)
+	maxDelaySlider:SetHeight(17)
+	maxDelaySlider:SetOrientation("HORIZONTAL")
+	maxDelaySlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+	maxDelaySlider:SetMinMaxValues(0,100)
+	maxDelaySlider:SetValue(50)
+	-- maxDelaySlider:SetBackdrop({
+	-- 	bgFile = "Interface\\Buttons\\UI-SliderBar-Background",
+	-- 	edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
+	-- 	tile = true, tileSize = 8, edgeSize = 8,
+	-- 	insets = { left = 3, right = 3, top = 6, bottom = 6 }})
+	maxDelaySlider:SetValueStep(25)
+
+	local maxDelaySliderLabel = maxDelaySlider:CreateFontString("maxDelaySliderLabel")
+	maxDelaySliderLabel:SetPoint("TOPLEFT", 34, -40)
+	maxDelaySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	maxDelaySliderLabel:SetWidth(250)
+	maxDelaySliderLabel:SetHeight(20)
+	maxDelaySliderLabel:SetTextColor(1, 0.8196079, 0)
+	maxDelaySliderLabel:SetShadowOffset(1, -1)
+	maxDelaySliderLabel:SetShadowColor(0, 0, 0)
+	maxDelaySliderLabel:SetText("Max Delay (up to 9 seconds)")
 
 	-- Create the Gratz List control
 	WIDTH_PANEL = 500
