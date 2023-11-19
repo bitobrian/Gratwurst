@@ -13,9 +13,8 @@ function InitializeSavedVariables(self)
 	GratwurstDelayInSeconds = GratwurstDelayInSeconds or 3
 	GratwurstRandomDelayMax = GratwurstRandomDelayMax or GratwurstDelayInSeconds
 	GratwurstEnabled = GratwurstEnabled or true
-	GratwurstRandomDelayEnabled = true;
-	GratwurstShouldVary = GratwurstShouldVary or false;
-	GratwurstVariancePercentage = GratwurstVariancePercentage or 50;
+	GratwurstVariancePercentage = GratwurstVariancePercentage or 50
+	GratwurstIsGratzing = GratwurstIsGratzing or false
 end
 
 function SetConfigurationWindow()
@@ -155,26 +154,20 @@ function OnEventReceived(self, event, msg, author, ...)
 end
 
 function GuildAchievementMessageEventReceived(isDebug, author)
+	-- if GratwurstIsGratzing is true, then we're already gratzing and we should stop the event
+	if GratwurstIsGratzing then
+		return
+	end
+
+	GratwurstIsGratzing = true
+
 	local gratsStop = true
 	local canGrats = false
-	if GratwurstShouldVary then
-		local random = math.random(1, 100)
-		if random <= GratwurstVariancePercentage then
-			canGrats = true
-		end
+	local random = math.random(1, 100)
+	if random <= GratwurstVariancePercentage then
+		canGrats = true
 	end
-	if GratwurstRandomDelayEnabled then
-		if GratwurstRandomDelayMax < 1 then
-			GratwurstRandomDelayMax = 1
-		end
-		if GratwurstRandomDelayMax > 9 then
-			GratwurstRandomDelayMax = 9
-		end
-		GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
-		if isDebug then
-			print("GratwurstDelayInSeconds: " .. GratwurstDelayInSeconds)
-		end
-	end
+	GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
     C_Timer.After(GratwurstDelayInSeconds,function()
         if gratsStop and canGrats and GratwurstEnabled and GratwurstMessage ~= "" then
 			gratsStop=false
@@ -184,6 +177,7 @@ function GuildAchievementMessageEventReceived(isDebug, author)
 				SendChatMessage(GetRandomMessageFromList(author), "GUILD")
 			end
         end
+		GratwurstIsGratzing = false
     end)
 end
 
@@ -264,9 +258,8 @@ local function slashcmd(msg, editbox)
 		print("GratwurstDelayInSeconds: " .. GratwurstDelayInSeconds)
 		print("GratwurstRandomDelayMax: " .. GratwurstRandomDelayMax)
 		print("GratwurstEnabled: " .. tostring(GratwurstEnabled))
-		print("GratwurstRandomDelayEnabled: " .. tostring(GratwurstRandomDelayEnabled))
-		print("GratwurstShouldVary: " .. tostring(GratwurstShouldVary))
 		print("GratwurstVariancePercentage: " .. GratwurstVariancePercentage)
+		print("GratwurstIsGratzing: " .. tostring(GratwurstIsGratzing))
 		GuildAchievementMessageEventReceived(true);
 	end
 end
