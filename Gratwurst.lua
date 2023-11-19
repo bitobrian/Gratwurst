@@ -1,27 +1,32 @@
+---@diagnostic disable: param-type-mismatch, missing-parameter, undefined-field
+-- create global variables
+PaddingLeft = 20
+
 function InitializeAddon(self)
 	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
 	self:RegisterEvent("PLAYER_LOGIN")
 	self:RegisterEvent("ADDON_LOADED")
-end 
+end
 
 function InitializeSavedVariables(self)
 	GratwurstMessage = GratwurstMessage or ""
 	GratwurstDelayInSeconds = GratwurstDelayInSeconds or 3
 	GratwurstRandomDelayMax = GratwurstRandomDelayMax or GratwurstDelayInSeconds
 	GratwurstEnabled = GratwurstEnabled or true
-	GratwurstRandomDelayEnabled = true;
+	GratwurstVariancePercentage = GratwurstVariancePercentage or 50
+	GratwurstIsGratzing = GratwurstIsGratzing or false
 end
 
 function SetConfigurationWindow()
 	local luaFrame = CreateFrame("Frame", "GratwurstPanel", InterfaceOptionsFramePanelContainer)
-	
+
 	local titleBorder = luaFrame:CreateTexture("UnneccessaryGlobalFrameNameTitleBorder")
 	titleBorder:SetWidth(320)
 	titleBorder:SetHeight(50)
 	titleBorder:SetPoint("TOP", luaFrame, "TOP", 0, 5)
 	titleBorder:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
 	titleBorder:SetTexCoord(.2, .8, 0, .6)
-	
+
 	local titleString = luaFrame:CreateFontString("UnneccessaryGlobalFrameNameTitleString")
 	titleString:SetFont("Fonts\\FRIZQT__.TTF", 15)
 	titleString:SetWidth(320)
@@ -29,161 +34,107 @@ function SetConfigurationWindow()
 	titleString:SetTextColor(1, 0.8196079, 0)
 	titleString:SetShadowOffset(1, -1)
 	titleString:SetShadowColor(0, 0, 0)
-	titleString:SetText("Gratwurst Configuration")
+	titleString:SetText("Gratwurst 1.6 Config")
 
 	Gratwurst = {};
 	Gratwurst.ui = {};
 	Gratwurst.ui.panel = luaFrame
 	Gratwurst.ui.panel.name = "Gratwurst";
 
-	-- Control - IsEnabled CheckBox
-	-- local isEnabledCheckButton = CreateFrame("CheckButton", "IsEnabledCheckButton", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate");
-	-- isEnabledCheckButton:SetPoint("TOPLEFT", 20, -50);
-	-- isEnabledCheckButton:SetScript("OnShow",
-	-- 	function(self, event, arg1)
-	-- 		self:SetChecked(GratwurstEnabled);
-	-- 	end);
-	-- isEnabledCheckButton:SetScript("OnClick",
-	-- 	function()
-	-- 		if (GratwurstEnabled) then
-	-- 			GratwurstEnabled = false;
-	-- 		else
-	-- 			GratwurstEnabled = true;
-	-- 		end
-	-- 	end);
-		
-	-- local isEnabledCheckButtonLabel = isEnabledCheckButton:CreateFontString("isEnabledCheckButtonLabel")
-	-- isEnabledCheckButtonLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	-- isEnabledCheckButtonLabel:SetWidth(120)
-	-- isEnabledCheckButtonLabel:SetHeight(20)
-	-- isEnabledCheckButtonLabel:SetPoint("TOPLEFT", -31, 15)
-	-- isEnabledCheckButtonLabel:SetTextColor(1, 0.8196079, 0)
-	-- isEnabledCheckButtonLabel:SetShadowOffset(1, -1)
-	-- isEnabledCheckButtonLabel:SetShadowColor(0, 0, 0)
-	-- isEnabledCheckButtonLabel:SetText("Enabled")
-
-	-- Control - Randomize Time To Talk CheckBox
-	-- local isRandomTTTCheckButton = CreateFrame("CheckButton", "IsRandomTTTCheckButton", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate");
-	-- isRandomTTTCheckButton:SetPoint("TOPLEFT", 20, -100);
-	-- isRandomTTTCheckButton:SetScript("OnShow",
-	-- 	function(self, event, arg1)
-	-- 		self:SetChecked(GratwurstRandomDelayEnabled);
-	-- 	end);
-	-- isRandomTTTCheckButton:SetScript("OnClick",
-	-- 	function()
-	-- 		if (GratwurstRandomDelayEnabled) then
-	-- 			GratwurstRandomDelayEnabled = false;
-	-- 		else
-	-- 			GratwurstRandomDelayEnabled = true;
-	-- 		end
-	-- 	end);
-		
-	-- local isRandomTTTCheckButtonLabel = isRandomTTTCheckButton:CreateFontString("isRandomTTTCheckButtonLabel")
-	-- isRandomTTTCheckButtonLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	-- isRandomTTTCheckButtonLabel:SetWidth(120)
-	-- isRandomTTTCheckButtonLabel:SetHeight(20)
-	-- isRandomTTTCheckButtonLabel:SetPoint("TOPLEFT", -31, 15)
-	-- isRandomTTTCheckButtonLabel:SetTextColor(1, 0.8196079, 0)
-	-- isRandomTTTCheckButtonLabel:SetShadowOffset(1, -1)
-	-- isRandomTTTCheckButtonLabel:SetShadowColor(0, 0, 0)
-	-- isRandomTTTCheckButtonLabel:SetText("Random Delay")
-
-	-- Slider - Gratwurst Max Delay Slider
-	-- local MySlider = CreateFrame("Slider", "GratwurstMaxDelaySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
-	-- MySlider:SetWidth(20)
-	-- MySlider:SetHeight(100)
-	-- MySlider:SetOrientation('HORIZONTAL')
-
-
-	-- Control - GratwurstDelayInSeconds
-	-- local delayEditBox = CreateFrame("EditBox", "Input_GratwurstDelayInSeconds", Gratwurst.ui.panel, "InputBoxTemplate")
-	-- delayEditBox:SetSize(25,30)
-	-- delayEditBox:SetMultiLine(false)
-    -- delayEditBox:ClearAllPoints()
-	-- delayEditBox:SetPoint("TOPLEFT", 25, -150)
-	-- delayEditBox:SetCursorPosition(0);
-	-- delayEditBox:ClearFocus();
-    -- delayEditBox:SetAutoFocus(false)
-	-- delayEditBox:SetScript("OnShow", function(self,event,arg1)
-	-- 	self:SetNumber(GratwurstDelayInSeconds)
-	-- 	self:SetCursorPosition(0);
-	-- 	self:ClearFocus();
-	-- end)
-	-- delayEditBox:SetScript("OnTextChanged", function(self,value)
-	-- 	GratwurstDelayInSeconds = self:GetNumber()
-	-- end)
-
-	local maxDelayEditBox = CreateFrame("EditBox", "Input_GratwurstRandomDelayMax", Gratwurst.ui.panel, "InputBoxTemplate")
-	maxDelayEditBox:SetSize(25,30)
-	maxDelayEditBox:SetMultiLine(false)
-    maxDelayEditBox:ClearAllPoints()
-	maxDelayEditBox:SetPoint("TOPLEFT", 34, -50)
-	maxDelayEditBox:SetCursorPosition(0);
-	maxDelayEditBox:ClearFocus();
-    maxDelayEditBox:SetAutoFocus(false)
-	maxDelayEditBox:Insert(GratwurstRandomDelayMax)
-	maxDelayEditBox:SetScript("OnShow", function(self,event,arg1)
-		self:SetNumber(GratwurstRandomDelayMax)
-		self:SetCursorPosition(0);
-		self:ClearFocus();
-	end)
-	maxDelayEditBox:SetScript("OnTextChanged", function(self,value)
-		GratwurstRandomDelayMax = self:GetNumber()
+	-- Create the max delay slide from 1 to 9
+	local maxDelaySlider = CreateFrame("Slider", "MaxDelaySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
+	maxDelaySlider:SetPoint("TOPLEFT", PaddingLeft, -70)
+	maxDelaySlider:SetWidth(132)
+	maxDelaySlider:SetHeight(17)
+	maxDelaySlider:SetOrientation("HORIZONTAL")
+	maxDelaySlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+	maxDelaySlider:SetMinMaxValues(1,9)
+	maxDelaySlider:SetValue(GratwurstRandomDelayMax)
+	maxDelaySlider:SetValueStep(1)
+	maxDelaySlider:SetObeyStepOnDrag(true)
+	maxDelaySlider:SetScript("OnValueChanged", function(self,event,arg1)
+		GratwurstRandomDelayMax = self:GetValue()
 	end)
 	
-	local maxDelayEditBoxLabel = maxDelayEditBox:CreateFontString("maxDelayEditBoxLabel")
-	maxDelayEditBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	maxDelayEditBoxLabel:SetWidth(250)
-	maxDelayEditBoxLabel:SetHeight(20)
-	maxDelayEditBoxLabel:SetPoint("TOPLEFT", -6, -6)
-	maxDelayEditBoxLabel:SetTextColor(1, 0.8196079, 0)
-	maxDelayEditBoxLabel:SetShadowOffset(1, -1)
-	maxDelayEditBoxLabel:SetShadowColor(0, 0, 0)
-	maxDelayEditBoxLabel:SetText("Max Delay (up to 9 seconds)")
+	-- Max delay label
+	local maxDelaySliderLabel = maxDelaySlider:CreateFontString("MaxDelaySliderLabel")
+	maxDelaySliderLabel:SetPoint("BOTTOM", maxDelaySlider, "TOP", 0, 0)
+	maxDelaySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	maxDelaySliderLabel:SetWidth(250)
+	maxDelaySliderLabel:SetHeight(20)
+	maxDelaySliderLabel:SetTextColor(1, 0.8196079, 0)
+	maxDelaySliderLabel:SetShadowOffset(1, -1)
+	maxDelaySliderLabel:SetShadowColor(0, 0, 0)
+	maxDelaySliderLabel:SetText("Max delay in gratzing")
+	
+	-- Create the Frequency slider
+	local MaxFrequencySlider = CreateFrame("Slider", "MaxFrequencySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
+	MaxFrequencySlider:SetPoint("TOPLEFT", PaddingLeft, -120)
+	MaxFrequencySlider:SetWidth(132)
+	MaxFrequencySlider:SetHeight(17)
+	MaxFrequencySlider:SetOrientation("HORIZONTAL")
+	MaxFrequencySlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+	MaxFrequencySlider:SetMinMaxValues(0,100)
+	MaxFrequencySlider:SetValue(GratwurstVariancePercentage)
+	MaxFrequencySlider:SetValueStep(1)
+	MaxFrequencySlider:SetObeyStepOnDrag(true)
+	MaxFrequencySlider:SetScript("OnValueChanged", function(self,event,arg1)
+		GratwurstVariancePercentage = self:GetValue()
+	end)
 
+	-- Frequency label
+	local MaxFrequencySliderLabel = MaxFrequencySlider:CreateFontString("MaxFrequencySliderLabel")
+	MaxFrequencySliderLabel:SetPoint("BOTTOM", MaxFrequencySlider, "TOP", 0, 0)
+	MaxFrequencySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	MaxFrequencySliderLabel:SetWidth(250)
+	MaxFrequencySliderLabel:SetHeight(20)
+	MaxFrequencySliderLabel:SetTextColor(1, 0.8196079, 0)
+	MaxFrequencySliderLabel:SetShadowOffset(1, -1)
+	MaxFrequencySliderLabel:SetShadowColor(0, 0, 0)
+	MaxFrequencySliderLabel:SetText("How often do we gratz?")
 
-	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
-	backdropFrame:SetPoint("TOPLEFT", 25,-110)
-	backdropFrame:SetSize(335, 215)
-	backdropFrame:SetBackdrop( {
-		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
-        tile = true,
-        tileSize = 12,
-        edgeSize = 8,
-        insets = { left = 5, right = 3, top = 3, bottom = 3	},
-	})
-
-	local scrollFrame = CreateFrame("ScrollFrame", nil, backdropFrame, "UIPanelScrollFrameTemplate")
-	scrollFrame:SetAlpha(0.8)
-	scrollFrame:SetSize(300,200)
-	scrollFrame:SetPoint("TOPLEFT", 7, -7)
-
-	local editBox = CreateFrame("EditBox", "Input_GratwurstMessage", scrollFrame)
-	editBox:SetMultiLine(true)
-	editBox:SetAutoFocus(false)
-	editBox:SetFontObject(ChatFontNormal)
-	editBox:Insert(GratwurstMessage)
-	editBox:SetScript("OnShow", function(self,event,arg1)
+	-- Create the Gratz List control that takes up the entire panel below the sliders
+	local gratzList = CreateFrame("EditBox", "Input_GratwurstMessage", Gratwurst.ui.panel)
+	gratzList:SetMultiLine(true)
+	gratzList:SetAutoFocus(false)
+	gratzList:SetFontObject(ChatFontNormal)
+	gratzList:Insert(GratwurstMessage)
+	gratzList:SetScript("OnShow", function(self,event,arg1)
 		self:SetText(GratwurstMessage)
 	end)
-	editBox:SetScript("OnTextChanged", function(self,value)
+	gratzList:SetScript("OnTextChanged", function(self,value)
 		GratwurstMessage = self:GetText()
 	end)
-	editBox:SetWidth(300)
-	scrollFrame:SetScrollChild(editBox)	
+	gratzList:SetWidth(300)
+	gratzList:SetHeight(200)
+	gratzList:SetPoint("TOPLEFT", PaddingLeft + 5, -180 + -5)
+	
+	-- create the backdrop for the edit box
+	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
+	backdropFrame:SetPoint("TOPLEFT", PaddingLeft, -180)
+	backdropFrame:SetSize(500, 400)
+	backdropFrame:SetBackdrop( {
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
+		tile = true,
+		tileSize = 12,
+		edgeSize = 8,
+		insets = { left = 5, right = 3, top = 3, bottom = 3	},
+	})
 
-	local editBoxLabel = backdropFrame:CreateFontString("editBoxLabel")
-	editBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	editBoxLabel:SetWidth(250)
-	editBoxLabel:SetHeight(20)
-	editBoxLabel:SetPoint("TOPLEFT", -20 ,20)
-	editBoxLabel:SetTextColor(1, 0.8196079, 0)
-	editBoxLabel:SetShadowOffset(1, -1)
-	editBoxLabel:SetShadowColor(0, 0, 0)
-	editBoxLabel:SetText("Gratz List (one message per line)")
 
-	InterfaceOptions_AddCategory(Gratwurst.ui.panel);	
+	-- Create the Gratz List label that is above the edit box and full width
+	local gratzListLabel = gratzList:CreateFontString("GratzListLabel")
+	gratzListLabel:SetPoint("BOTTOM", gratzList, "TOP", PaddingLeft + 15, 0)
+	gratzListLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	gratzListLabel:SetWidth(500)
+	gratzListLabel:SetHeight(20)
+	gratzListLabel:SetTextColor(1, 0.8196079, 0)
+	gratzListLabel:SetShadowOffset(1, -1)
+	gratzListLabel:SetShadowColor(0, 0, 0)
+	gratzListLabel:SetText("One message per line. Use '$player' to insert the player name.")
+
+	InterfaceOptions_AddCategory(Gratwurst.ui.panel);
 end
 
 function OnEventReceived(self, event, msg, author, ...)
@@ -191,9 +142,9 @@ function OnEventReceived(self, event, msg, author, ...)
 		if (GratwurstUnitName == nil or strfind(GratwurstUnitName, " ")) then
 			GratwurstUnitName = strjoin("-", UnitName("player"), GetNormalizedRealmName())
 		end;
-	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then 
+	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then		
 		if (author ~= GratwurstUnitName) then
-			GuildAchievementMessageEventReceived();
+			GuildAchievementMessageEventReceived(false, author);
 		end
 	elseif (event == "ADDON_LOADED" and msg == "Gratwurst") then
 		InitializeSavedVariables();
@@ -202,32 +153,56 @@ function OnEventReceived(self, event, msg, author, ...)
 	end
 end
 
-function GuildAchievementMessageEventReceived()
-	gratsStop=true
-	if GratwurstRandomDelayEnabled then
-		-- TODO: Make a slider for this instead of checking
-		if GratwurstRandomDelayMax < 1 then
-			GratwurstRandomDelayMax = 1
-		end
-		if GratwurstRandomDelayMax > 9 then
-			GratwurstRandomDelayMax = 9
-		end
-		GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
+function GuildAchievementMessageEventReceived(isDebug, author)
+	-- if GratwurstIsGratzing is true, then we're already gratzing and we should stop the event
+	if GratwurstIsGratzing then
+		return
 	end
+
+	GratwurstIsGratzing = true
+
+	local gratsStop = true
+	local canGrats = false
+	local random = math.random(1, 100)
+	if random <= GratwurstVariancePercentage then
+		canGrats = true
+	end
+	GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
     C_Timer.After(GratwurstDelayInSeconds,function()
-        if gratsStop and GratwurstEnabled and GratwurstMessage ~= "" then
-			gratsStop=false			
-			SendChatMessage(GetRandomMessageFromList(),"GUILD")
+        if gratsStop and canGrats and GratwurstEnabled and GratwurstMessage ~= "" then
+			gratsStop=false
+			if isDebug then
+				print("GetRandomMessageFromList(author): " .. GetRandomMessageFromList(author))
+			else
+				SendChatMessage(GetRandomMessageFromList(author), "GUILD")
+			end
         end
+		GratwurstIsGratzing = false
     end)
 end
 
-function GetRandomMessageFromList()
+function GetRandomMessageFromList(author)
 	local table = lines(GratwurstMessage)
 	local index = GetTableSize(table)
 	local value = math.random(1,index)
 	local message = table[value]
+
+	if author ~= nil then
+		message = FindAndReplacePlayerNameToken(message, author)
+	else
+		-- we're debugging because author is nil since the event isn't fired
+		message = FindAndReplacePlayerNameToken(message, "Taco-RealmOfNightmares")
+	end
+
 	return message
+end
+
+function FindAndReplacePlayerNameToken(message, author)
+	local result = message
+	local token = "$player"
+	local value = string.gsub(author, "%-.*", "")
+	result = string.gsub(result, token, value)
+	return result
 end
 
 function Log(message)
@@ -277,6 +252,15 @@ local function slashcmd(msg, editbox)
 	elseif (msg == "disable") then
 		GratwurstEnabled = false;
 		print("Gratwurst disabled.");
+	elseif (msg == "debug") then
+		-- output saved variables to chat
+		print("=======================")
+		print("GratwurstDelayInSeconds: " .. GratwurstDelayInSeconds)
+		print("GratwurstRandomDelayMax: " .. GratwurstRandomDelayMax)
+		print("GratwurstEnabled: " .. tostring(GratwurstEnabled))
+		print("GratwurstVariancePercentage: " .. GratwurstVariancePercentage)
+		print("GratwurstIsGratzing: " .. tostring(GratwurstIsGratzing))
+		GuildAchievementMessageEventReceived(true);
 	end
 end
 
