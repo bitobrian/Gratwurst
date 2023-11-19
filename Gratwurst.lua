@@ -1,4 +1,7 @@
 ---@diagnostic disable: param-type-mismatch, missing-parameter, undefined-field
+-- create global variables
+PaddingLeft = 20
+
 function InitializeAddon(self)
 	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
 	self:RegisterEvent("PLAYER_LOGIN")
@@ -32,7 +35,7 @@ function SetConfigurationWindow()
 	titleString:SetTextColor(1, 0.8196079, 0)
 	titleString:SetShadowOffset(1, -1)
 	titleString:SetShadowColor(0, 0, 0)
-	titleString:SetText("Gratwurst 1.9 Config")
+	titleString:SetText("Gratwurst 1.6 Config")
 
 	Gratwurst = {};
 	Gratwurst.ui = {};
@@ -41,7 +44,7 @@ function SetConfigurationWindow()
 
 	-- Create the max delay slide from 1 to 9
 	local maxDelaySlider = CreateFrame("Slider", "MaxDelaySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
-	maxDelaySlider:SetPoint("TOPLEFT", 34, -45)
+	maxDelaySlider:SetPoint("TOPLEFT", PaddingLeft, -70)
 	maxDelaySlider:SetWidth(132)
 	maxDelaySlider:SetHeight(17)
 	maxDelaySlider:SetOrientation("HORIZONTAL")
@@ -63,11 +66,11 @@ function SetConfigurationWindow()
 	maxDelaySliderLabel:SetTextColor(1, 0.8196079, 0)
 	maxDelaySliderLabel:SetShadowOffset(1, -1)
 	maxDelaySliderLabel:SetShadowColor(0, 0, 0)
-	maxDelaySliderLabel:SetText("Maximum delay in gratzing")
+	maxDelaySliderLabel:SetText("Max delay in gratzing")
 	
 	-- Create the Frequency slider
 	local MaxFrequencySlider = CreateFrame("Slider", "MaxFrequencySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
-	MaxFrequencySlider:SetPoint("TOPLEFT", 34, -100)
+	MaxFrequencySlider:SetPoint("TOPLEFT", PaddingLeft, -120)
 	MaxFrequencySlider:SetWidth(132)
 	MaxFrequencySlider:SetHeight(17)
 	MaxFrequencySlider:SetOrientation("HORIZONTAL")
@@ -91,54 +94,46 @@ function SetConfigurationWindow()
 	MaxFrequencySliderLabel:SetShadowColor(0, 0, 0)
 	MaxFrequencySliderLabel:SetText("How often do we gratz?")
 
-	-- Create the Gratz List control
-	WIDTH_PANEL = 500
-	HEIGHT_PANEL = 300
-
-	-- Create the scroll frame backdrop
-	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
-	backdropFrame:SetPoint("BOTTOM")
-	backdropFrame:SetSize(WIDTH_PANEL, HEIGHT_PANEL)
-	backdropFrame:SetBackdrop( {
-		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
-        tile = true,
-        tileSize = 12,
-        edgeSize = 8,
-        insets = { left = 5, right = 3, top = 3, bottom = 3	},
-	})
-
-	-- Create the scroll frame 
-	local scrollFrame = CreateFrame("ScrollFrame", nil, backdropFrame, "UIPanelScrollFrameTemplate")
-	scrollFrame:SetAlpha(0.8)
-	scrollFrame:SetSize(WIDTH_PANEL - 35, HEIGHT_PANEL - 11)
-	scrollFrame:SetPoint("TOPLEFT", 7, -7)
-
-	-- Create the scroll frame edit box
-	local editBox = CreateFrame("EditBox", "Input_GratwurstMessage", scrollFrame)
-	editBox:SetMultiLine(true)
-	editBox:SetAutoFocus(false)
-	editBox:SetFontObject(ChatFontNormal)
-	editBox:Insert(GratwurstMessage)
-	editBox:SetScript("OnShow", function(self,event,arg1)
+	-- Create the Gratz List control that takes up the entire panel below the sliders
+	local gratzList = CreateFrame("EditBox", "Input_GratwurstMessage", Gratwurst.ui.panel)
+	gratzList:SetMultiLine(true)
+	gratzList:SetAutoFocus(false)
+	gratzList:SetFontObject(ChatFontNormal)
+	gratzList:Insert(GratwurstMessage)
+	gratzList:SetScript("OnShow", function(self,event,arg1)
 		self:SetText(GratwurstMessage)
 	end)
-	editBox:SetScript("OnTextChanged", function(self,value)
+	gratzList:SetScript("OnTextChanged", function(self,value)
 		GratwurstMessage = self:GetText()
 	end)
-	editBox:SetWidth(300)
-	scrollFrame:SetScrollChild(editBox)
+	gratzList:SetWidth(300)
+	gratzList:SetHeight(200)
+	gratzList:SetPoint("TOPLEFT", PaddingLeft + 5, -180 + -5)
+	
+	-- create the backdrop for the edit box
+	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
+	backdropFrame:SetPoint("TOPLEFT", PaddingLeft, -180)
+	backdropFrame:SetSize(500, 400)
+	backdropFrame:SetBackdrop( {
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
+		tile = true,
+		tileSize = 12,
+		edgeSize = 8,
+		insets = { left = 5, right = 3, top = 3, bottom = 3	},
+	})
 
-	-- Create the scroll frame label
-	local editBoxLabel = backdropFrame:CreateFontString("editBoxLabel")
-	editBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	editBoxLabel:SetWidth(250)
-	editBoxLabel:SetHeight(20)
-	editBoxLabel:SetPoint("TOPLEFT", -20 ,20)
-	editBoxLabel:SetTextColor(1, 0.8196079, 0)
-	editBoxLabel:SetShadowOffset(1, -1)
-	editBoxLabel:SetShadowColor(0, 0, 0)
-	editBoxLabel:SetText("Gratz List (one message per line)")
+
+	-- Create the Gratz List label that is above the edit box and full width
+	local gratzListLabel = gratzList:CreateFontString("GratzListLabel")
+	gratzListLabel:SetPoint("BOTTOM", gratzList, "TOP", PaddingLeft + 15, 0)
+	gratzListLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	gratzListLabel:SetWidth(500)
+	gratzListLabel:SetHeight(20)
+	gratzListLabel:SetTextColor(1, 0.8196079, 0)
+	gratzListLabel:SetShadowOffset(1, -1)
+	gratzListLabel:SetShadowColor(0, 0, 0)
+	gratzListLabel:SetText("One message per line. Use '$player' to insert the player name.")
 
 	InterfaceOptions_AddCategory(Gratwurst.ui.panel);
 end
@@ -209,7 +204,6 @@ function GetRandomMessageFromList(author)
 end
 
 function FindAndReplacePlayerNameToken(message, author)
-	print("author: " .. author)
 	local result = message
 	local token = "$player"
 	local value = string.gsub(author, "%-.*", "")
