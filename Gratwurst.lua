@@ -38,12 +38,13 @@ function SetConfigurationWindow()
 	Gratwurst.ui.panel = luaFrame
 	Gratwurst.ui.panel.name = "Gratwurst";
 
-	-- Create the max delay  edit box
+	-- Create the max delay edit box
 	local maxDelayEditBox = CreateFrame("EditBox", "Input_GratwurstRandomDelayMax", Gratwurst.ui.panel, "InputBoxTemplate")
 	maxDelayEditBox:SetSize(25,30)
 	maxDelayEditBox:SetMultiLine(false)
     -- maxDelayEditBox:ClearAllPoints()
-	maxDelayEditBox:SetPoint("TOPLEFT", 10, -50)
+	-- set the point of the edit box to the left of the label
+	maxDelayEditBox:SetPoint("BOTTOMLEFT", 34, 34)
 	maxDelayEditBox:SetCursorPosition(0);
 	maxDelayEditBox:ClearFocus();
     maxDelayEditBox:SetAutoFocus(false)
@@ -58,7 +59,7 @@ function SetConfigurationWindow()
 	end)
 
 	local maxDelayEditBoxLabel = maxDelayEditBox:CreateFontString("maxDelayEditBoxLabel")
-	maxDelayEditBoxLabel:SetPoint("LEFT", maxDelayEditBox, "RIGHT", 5, 0)
+	maxDelayEditBoxLabel:SetPoint("TOPLEFT", maxDelayEditBox, "TOPLEFT", 0, 5)
 	maxDelayEditBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	-- maxDelayEditBoxLabel:SetWidth(250)
 	maxDelayEditBoxLabel:SetHeight(20)
@@ -277,6 +278,15 @@ local function slashcmd(msg, editbox)
 	elseif (msg == "disable") then
 		GratwurstEnabled = false;
 		print("Gratwurst disabled.");
+	elseif (msg == "debug") then
+		-- output saved variables to chat
+		print("=======================")
+		print("GratwurstDelayInSeconds: " .. GratwurstDelayInSeconds)
+		print("GratwurstRandomDelayMax: " .. GratwurstRandomDelayMax)
+		print("GratwurstEnabled: " .. tostring(GratwurstEnabled))
+		print("GratwurstRandomDelayEnabled: " .. tostring(GratwurstRandomDelayEnabled))
+		print("GratwurstShouldVary: " .. tostring(GratwurstShouldVary))
+		print("GratwurstVariancePercentage: " .. GratwurstVariancePercentage)
 	end
 end
 
