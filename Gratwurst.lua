@@ -1,3 +1,4 @@
+---@diagnostic disable: param-type-mismatch, missing-parameter, undefined-field
 function InitializeAddon(self)
 	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
 	self:RegisterEvent("PLAYER_LOGIN")
@@ -31,86 +32,64 @@ function SetConfigurationWindow()
 	titleString:SetTextColor(1, 0.8196079, 0)
 	titleString:SetShadowOffset(1, -1)
 	titleString:SetShadowColor(0, 0, 0)
-	titleString:SetText("Gratwurst Configuration")
+	titleString:SetText("Gratwurst 1.9 Config")
 
 	Gratwurst = {};
 	Gratwurst.ui = {};
 	Gratwurst.ui.panel = luaFrame
 	Gratwurst.ui.panel.name = "Gratwurst";
 
-	-- Create the max delay edit box
-	local maxDelayEditBox = CreateFrame("EditBox", "Input_GratwurstRandomDelayMax", Gratwurst.ui.panel, "InputBoxTemplate")
-	maxDelayEditBox:SetSize(25,30)
-	maxDelayEditBox:SetMultiLine(false)
-    -- maxDelayEditBox:ClearAllPoints()
-	-- set the point of the edit box to the left of the label
-	maxDelayEditBox:SetPoint("BOTTOMLEFT", 34, 34)
-	maxDelayEditBox:SetCursorPosition(0);
-	maxDelayEditBox:ClearFocus();
-    maxDelayEditBox:SetAutoFocus(false)
-	maxDelayEditBox:Insert(GratwurstRandomDelayMax)
-	maxDelayEditBox:SetScript("OnShow", function(self,event,arg1)
-		self:SetNumber(GratwurstRandomDelayMax)
-		self:SetCursorPosition(0);
-		self:ClearFocus();
-	end)
-	maxDelayEditBox:SetScript("OnTextChanged", function(self,value)
-		GratwurstRandomDelayMax = self:GetNumber()
-	end)
-
-	local maxDelayEditBoxLabel = maxDelayEditBox:CreateFontString("maxDelayEditBoxLabel")
-	maxDelayEditBoxLabel:SetPoint("TOPLEFT", maxDelayEditBox, "TOPLEFT", 0, 5)
-	maxDelayEditBoxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	-- maxDelayEditBoxLabel:SetWidth(250)
-	maxDelayEditBoxLabel:SetHeight(20)
-	maxDelayEditBoxLabel:SetTextColor(1, 0.8196079, 0)
-	maxDelayEditBoxLabel:SetShadowOffset(1, -1)
-	maxDelayEditBoxLabel:SetShadowColor(0, 0, 0)
-	maxDelayEditBoxLabel:SetText("Max Delay (up to 9 seconds)")
-
-	-- Create the varianceDropDown
-	local varianceDropDown = CreateFrame("Frame", "VarianceDropDown",  Gratwurst.ui.panel, "UIDropDownMenuTemplate")
-	varianceDropDown:SetPoint("BOTTOMLEFT", maxDelayEditBox, "BOTTOMLEFT", 0, -15)
-	UIDropDownMenu_SetWidth(varianceDropDown, 125) -- Use in place of dropDown:SetWidth
-	-- Bind an initializer function to the dropdown; see previous sections for initializer function examples.
-	UIDropDownMenu_Initialize(varianceDropDown, VarianceDropdown_OnInit)
-	UIDropDownMenu_SetText(varianceDropDown, GratwurstVariancePercentage)
-
-	local varianceDropDownLabel = varianceDropDown:CreateFontString("varianceDropDownLabel")
-	varianceDropDownLabel:SetPoint("TOPLEFT", varianceDropDown, "TOPLEFT", 0, 5)
-	varianceDropDownLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	varianceDropDownLabel:SetWidth(250)
-	varianceDropDownLabel:SetHeight(20)
-	varianceDropDownLabel:SetTextColor(1, 0.8196079, 0)
-	varianceDropDownLabel:SetShadowOffset(1, -1)
-	varianceDropDownLabel:SetShadowColor(0, 0, 0)
-	varianceDropDownLabel:SetText("Select how often we should gratz")
-
-	-- Create the Max Delay slider
+	-- Create the max delay slide from 1 to 9
 	local maxDelaySlider = CreateFrame("Slider", "MaxDelaySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
 	maxDelaySlider:SetPoint("TOPLEFT", 34, -45)
 	maxDelaySlider:SetWidth(132)
 	maxDelaySlider:SetHeight(17)
 	maxDelaySlider:SetOrientation("HORIZONTAL")
 	maxDelaySlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
-	maxDelaySlider:SetMinMaxValues(0,100)
-	maxDelaySlider:SetValue(50)
-	-- maxDelaySlider:SetBackdrop({
-	-- 	bgFile = "Interface\\Buttons\\UI-SliderBar-Background",
-	-- 	edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
-	-- 	tile = true, tileSize = 8, edgeSize = 8,
-	-- 	insets = { left = 3, right = 3, top = 6, bottom = 6 }})
-	maxDelaySlider:SetValueStep(25)
-
-	local maxDelaySliderLabel = maxDelaySlider:CreateFontString("maxDelaySliderLabel")
-	maxDelaySliderLabel:SetPoint("TOPLEFT", 34, -40)
+	maxDelaySlider:SetMinMaxValues(1,9)
+	maxDelaySlider:SetValue(GratwurstRandomDelayMax)
+	maxDelaySlider:SetValueStep(1)
+	maxDelaySlider:SetObeyStepOnDrag(true)
+	maxDelaySlider:SetScript("OnValueChanged", function(self,event,arg1)
+		GratwurstRandomDelayMax = self:GetValue()
+	end)
+	
+	-- Max delay label
+	local maxDelaySliderLabel = maxDelaySlider:CreateFontString("MaxDelaySliderLabel")
+	maxDelaySliderLabel:SetPoint("BOTTOM", maxDelaySlider, "TOP", 0, 0)
 	maxDelaySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	maxDelaySliderLabel:SetWidth(250)
 	maxDelaySliderLabel:SetHeight(20)
 	maxDelaySliderLabel:SetTextColor(1, 0.8196079, 0)
 	maxDelaySliderLabel:SetShadowOffset(1, -1)
 	maxDelaySliderLabel:SetShadowColor(0, 0, 0)
-	maxDelaySliderLabel:SetText("Max Delay (up to 9 seconds)")
+	maxDelaySliderLabel:SetText("Maximum delay in gratzing")
+	
+	-- Create the Frequency slider
+	local MaxFrequencySlider = CreateFrame("Slider", "MaxFrequencySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
+	MaxFrequencySlider:SetPoint("TOPLEFT", 34, -100)
+	MaxFrequencySlider:SetWidth(132)
+	MaxFrequencySlider:SetHeight(17)
+	MaxFrequencySlider:SetOrientation("HORIZONTAL")
+	MaxFrequencySlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+	MaxFrequencySlider:SetMinMaxValues(0,100)
+	MaxFrequencySlider:SetValue(GratwurstVariancePercentage)
+	MaxFrequencySlider:SetValueStep(1)
+	MaxFrequencySlider:SetObeyStepOnDrag(true)
+	MaxFrequencySlider:SetScript("OnValueChanged", function(self,event,arg1)
+		GratwurstVariancePercentage = self:GetValue()
+	end)
+
+	-- Frequency label
+	local MaxFrequencySliderLabel = MaxFrequencySlider:CreateFontString("MaxFrequencySliderLabel")
+	MaxFrequencySliderLabel:SetPoint("BOTTOM", MaxFrequencySlider, "TOP", 0, 0)
+	MaxFrequencySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	MaxFrequencySliderLabel:SetWidth(250)
+	MaxFrequencySliderLabel:SetHeight(20)
+	MaxFrequencySliderLabel:SetTextColor(1, 0.8196079, 0)
+	MaxFrequencySliderLabel:SetShadowOffset(1, -1)
+	MaxFrequencySliderLabel:SetShadowColor(0, 0, 0)
+	MaxFrequencySliderLabel:SetText("How often do we gratz?")
 
 	-- Create the Gratz List control
 	WIDTH_PANEL = 500
@@ -169,9 +148,9 @@ function OnEventReceived(self, event, msg, author, ...)
 		if (GratwurstUnitName == nil or strfind(GratwurstUnitName, " ")) then
 			GratwurstUnitName = strjoin("-", UnitName("player"), GetNormalizedRealmName())
 		end;
-	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then
+	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then		
 		if (author ~= GratwurstUnitName) then
-			GuildAchievementMessageEventReceived();
+			GuildAchievementMessageEventReceived(false, author);
 		end
 	elseif (event == "ADDON_LOADED" and msg == "Gratwurst") then
 		InitializeSavedVariables();
@@ -180,16 +159,16 @@ function OnEventReceived(self, event, msg, author, ...)
 	end
 end
 
-function GuildAchievementMessageEventReceived()
+function GuildAchievementMessageEventReceived(isDebug, author)
 	local gratsStop = true
 	local canGrats = false
 	if GratwurstShouldVary then
-		if math.random(1, 100) <= GratwurstVariancePercentage then
+		local random = math.random(1, 100)
+		if random <= GratwurstVariancePercentage then
 			canGrats = true
 		end
 	end
 	if GratwurstRandomDelayEnabled then
-		-- TODO: Make a slider for this instead of checking
 		if GratwurstRandomDelayMax < 1 then
 			GratwurstRandomDelayMax = 1
 		end
@@ -197,38 +176,45 @@ function GuildAchievementMessageEventReceived()
 			GratwurstRandomDelayMax = 9
 		end
 		GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
+		if isDebug then
+			print("GratwurstDelayInSeconds: " .. GratwurstDelayInSeconds)
+		end
 	end
     C_Timer.After(GratwurstDelayInSeconds,function()
         if gratsStop and canGrats and GratwurstEnabled and GratwurstMessage ~= "" then
 			gratsStop=false
-			SendChatMessage(GetRandomMessageFromList(),"GUILD")
+			if isDebug then
+				print("GetRandomMessageFromList(author): " .. GetRandomMessageFromList(author))
+			else
+				SendChatMessage(GetRandomMessageFromList(author), "GUILD")
+			end
         end
     end)
 end
 
-function GetRandomMessageFromList()
+function GetRandomMessageFromList(author)
 	local table = lines(GratwurstMessage)
 	local index = GetTableSize(table)
 	local value = math.random(1,index)
 	local message = table[value]
+
+	if author ~= nil then
+		message = FindAndReplacePlayerNameToken(message, author)
+	else
+		-- we're debugging because author is nil since the event isn't fired
+		message = FindAndReplacePlayerNameToken(message, "Taco-RealmOfNightmares")
+	end
+
 	return message
 end
 
-function VarianceDropdown_OnSelectionChanged(self, arg1, arg2, checked)
-	GratwurstVariancePercentage = arg1
-end
-
-function VarianceDropdown_OnInit(frame, level, menuList)
-	local info = UIDropDownMenu_CreateInfo()
-	info.func = VarianceDropdown_OnSelectionChanged
-	info.text, info.checked = "100%", 100
-	UIDropDownMenu_AddButton(info)
-	info.text, info.checked = "75%", 75
-	UIDropDownMenu_AddButton(info)
-	info.text, info.checked = "50%", 50
-	UIDropDownMenu_AddButton(info)
-	info.text, info.checked = "25%", 25
-	UIDropDownMenu_AddButton(info)
+function FindAndReplacePlayerNameToken(message, author)
+	print("author: " .. author)
+	local result = message
+	local token = "$player"
+	local value = string.gsub(author, "%-.*", "")
+	result = string.gsub(result, token, value)
+	return result
 end
 
 function Log(message)
@@ -287,6 +273,7 @@ local function slashcmd(msg, editbox)
 		print("GratwurstRandomDelayEnabled: " .. tostring(GratwurstRandomDelayEnabled))
 		print("GratwurstShouldVary: " .. tostring(GratwurstShouldVary))
 		print("GratwurstVariancePercentage: " .. GratwurstVariancePercentage)
+		GuildAchievementMessageEventReceived(true);
 	end
 end
 
