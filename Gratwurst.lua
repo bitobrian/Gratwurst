@@ -1,5 +1,6 @@
 ---@diagnostic disable: param-type-mismatch, missing-parameter, undefined-field
 -- create global variables
+ConfigTitle = "Gratwurst 1.7 Config"
 PaddingLeft = 20
 
 function InitializeAddon(self)
@@ -15,6 +16,7 @@ function InitializeSavedVariables(self)
 	GratwurstEnabled = GratwurstEnabled or true
 	GratwurstVariancePercentage = GratwurstVariancePercentage or 50
 	GratwurstIsGratzing = GratwurstIsGratzing or false
+	GratwurstShouldRandomize = GratwurstShouldRandomize or true
 end
 
 function SetConfigurationWindow()
@@ -34,12 +36,31 @@ function SetConfigurationWindow()
 	titleString:SetTextColor(1, 0.8196079, 0)
 	titleString:SetShadowOffset(1, -1)
 	titleString:SetShadowColor(0, 0, 0)
-	titleString:SetText("Gratwurst 1.6 Config")
+	titleString:SetText(ConfigTitle)
 
 	Gratwurst = {};
 	Gratwurst.ui = {};
 	Gratwurst.ui.panel = luaFrame
 	Gratwurst.ui.panel.name = "Gratwurst";
+
+	-- Make a checkbox to disable randomizing the message
+	local checkbox = CreateFrame("CheckButton", "GratwurstCheckbox", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate")
+	checkbox:SetPoint("TOPLEFT", PaddingLeft, -30)
+	checkbox:SetChecked(GratwurstShouldRandomize)
+	checkbox:SetScript("OnClick", function(self,event,arg1)
+		GratwurstShouldRandomize = self:GetChecked()
+	end)
+
+	-- Make a label for the checkbox
+	local checkboxLabel = checkbox:CreateFontString("GratwurstCheckboxLabel")
+	checkboxLabel:SetPoint("BOTTOM", checkbox, "TOP", 0, 0)
+	checkboxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	checkboxLabel:SetWidth(250)
+	checkboxLabel:SetHeight(20)
+	checkboxLabel:SetTextColor(1, 0.8196079, 0)
+	checkboxLabel:SetShadowOffset(1, -1)
+	checkboxLabel:SetShadowColor(0, 0, 0)
+	checkboxLabel:SetText("Randomize Message")
 
 	-- Create the max delay slide from 1 to 9
 	local maxDelaySlider = CreateFrame("Slider", "MaxDelaySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
@@ -154,14 +175,12 @@ function OnEventReceived(self, event, msg, author, ...)
 end
 
 function GuildAchievementMessageEventReceived(isDebug, author)
-	-- if GratwurstIsGratzing is true, then we're already gratzing and we should stop the event
 	if GratwurstIsGratzing then
 		return
 	end
 
 	GratwurstIsGratzing = true
 
-	local gratsStop = true
 	local canGrats = false
 	local random = math.random(1, 100)
 	if random <= GratwurstVariancePercentage then
@@ -169,16 +188,37 @@ function GuildAchievementMessageEventReceived(isDebug, author)
 	end
 	GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
     C_Timer.After(GratwurstDelayInSeconds,function()
-        if gratsStop and canGrats and GratwurstEnabled and GratwurstMessage ~= "" then
-			gratsStop=false
-			if isDebug then
-				print("GetRandomMessageFromList(author): " .. GetRandomMessageFromList(author))
+        if canGrats and GratwurstEnabled and GratwurstMessage ~= "" then
+			if GratwurstShouldRandomize then
+				if isDebug then
+					print("GetTopMessageFromList(author): " .. GetTopMessageFromList(author))
+				else
+					SendChatMessage(GetTopMessageFromList(author), "GUILD")
+				end
 			else
-				SendChatMessage(GetRandomMessageFromList(author), "GUILD")
+				if isDebug then
+					print("GetRandomMessageFromList(author): " .. GetRandomMessageFromList(author))
+				else
+					SendChatMessage(GetRandomMessageFromList(author), "GUILD")
+				end
 			end
-        end
+		end
 		GratwurstIsGratzing = false
     end)
+end
+
+function GetTopMessageFromList(author)
+	local table = lines(GratwurstMessage)
+	local message = table[1]
+
+	if author ~= nil then
+		message = FindAndReplacePlayerNameToken(message, author)
+	else
+		-- we're debugging because author is nil since the event isn't fired
+		message = FindAndReplacePlayerNameToken(message, "Taco-RealmOfNightmares")
+	end
+
+	return message
 end
 
 function GetRandomMessageFromList(author)
