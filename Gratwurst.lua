@@ -35,7 +35,7 @@ function SetConfigurationWindow()
 	titleString:SetTextColor(1, 0.8196079, 0)
 	titleString:SetShadowOffset(1, -1)
 	titleString:SetShadowColor(0, 0, 0)
-	titleString:SetText("Gratwurst 1.6 Config")
+	titleString:SetText("Gratwurst Config")
 
 	Gratwurst = {};
 	Gratwurst.ui = {};
