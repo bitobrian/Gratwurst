@@ -2,7 +2,7 @@
 ## Interface: 110000
 ## Notes: Automatically send congrats for achievements in chat.
 ## Title: Gratwurst
-## Version: 1.7.1
+## Version: 1.7.2
 ## DefaultState: Enabled
 ## SavedVariablesPerCharacter: GratwurstMessage, GratwurstDelayInSeconds, GratwurstEnabled, GratwurstUnitName, GratwurstRandomDelayEnabled, GratwurstRandomDelayMax, GratwurstShouldVary, GratwurstVariancePercentage, GratwurstIsGratzing
 Gratwurst.xml

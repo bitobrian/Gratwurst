@@ -1,3 +1,4 @@
+1.7.2 - Fixed slash command...again
 1.7.0 - Updated TOC to The War Within.
         Fixed addon not displaying in the menu.
         Fixed /gw c command to open configuration menu correctly.
