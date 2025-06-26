@@ -227,7 +227,7 @@ function SetConfigurationWindow()
 	gratzListLabel:SetTextColor(1, 0.8196079, 0)
 	gratzListLabel:SetShadowOffset(1, -1)
 	gratzListLabel:SetShadowColor(0, 0, 0)
-	gratzListLabel:SetText("Messages List (use %c for name, %l for level, %C for class, etc.)")
+	gratzListLabel:SetText("Messages List")
 
 	-- Create ScrollFrame for message list
 	local scrollFrame = CreateFrame("ScrollFrame", "GratwurstMessageScrollFrame", backdropFrame, "UIPanelScrollFrameTemplate")
