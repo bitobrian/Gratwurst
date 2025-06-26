@@ -6,12 +6,33 @@ A delicious automatic congratulations messaging addon for World of Warcraft.
 - [x] Input and save grats message
 - [x] Set and save delay
 - [x] Choose from randomized string list
+- [x] **NEW in 1.8.0**: Individual message management with listbox interface
+- [x] **NEW in 1.8.0**: Add, edit, delete, and reorder messages
+- [x] **NEW in 1.8.0**: Comprehensive default message list
+- [x] **NEW in 1.8.0**: Message count display
+- [x] **NEW in 1.8.0**: Restore defaults functionality
 
 ## Usage
 
 Make changes and dump into Interface/Addons/Gratwurst.
 
 On VS Code, you can use the vscode launch.json with the powershell copy script to quickly back-up and copy the addon using F5.
+
+### Message Management
+
+The addon now features a modern listbox interface for managing your congratulatory messages:
+
+- **Add Message**: Click the "Add Message" button to create new messages
+- **Edit Message**: Click "Edit" on any message to modify it
+- **Delete Message**: Click "Del" to remove unwanted messages
+- **Reorder Messages**: Use ↑ and ↓ buttons to change message order
+- **Restore Defaults**: Click "Restore Defaults" to reset to the built-in message list
+
+### Message Format
+
+Use `$player` in your messages to automatically insert the player's name:
+- `"Gratz $player!"` becomes `"Gratz John!"`
+- `"Congratulations on your achievement $player!"` becomes `"Congratulations on your achievement John!"`
 
 ## Contributing
 

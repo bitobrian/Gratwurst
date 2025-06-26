@@ -1,3 +1,10 @@
+1.8.0 - Complete UI overhaul with modern message management!
+        Replaced EditBox with ScrollFrame-based message list.
+        Added individual message management (add, edit, delete, reorder).
+        Included comprehensive default message list.
+        Added message count display and restore defaults functionality.
+        Improved user experience with movable dialogs and keyboard shortcuts.
+        Automatic migration from old format - no data loss.
 1.7.2 - Fixed slash command...again
 1.7.0 - Updated TOC to The War Within.
         Fixed addon not displaying in the menu.
