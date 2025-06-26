@@ -1,8 +1,8 @@
 ## Author: Bitobrian, Galiagante 
-## Interface: 100200
+## Interface: 110002
 ## Notes: Automatically send congrats for achievements in chat.
 ## Title: Gratwurst
-## Version: 1.6.0
+## Version: 1.7.2
 ## DefaultState: Enabled
 ## SavedVariablesPerCharacter: GratwurstMessage, GratwurstDelayInSeconds, GratwurstEnabled, GratwurstUnitName, GratwurstRandomDelayEnabled, GratwurstRandomDelayMax, GratwurstShouldVary, GratwurstVariancePercentage, GratwurstIsGratzing, GratwurstShouldRandomize
 Gratwurst.xml

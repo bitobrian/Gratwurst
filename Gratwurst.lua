@@ -2,6 +2,7 @@
 -- create global variables
 ConfigTitle = "Gratwurst 1.7 Config"
 PaddingLeft = 20
+local category
 
 function InitializeAddon(self)
 	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
@@ -155,7 +156,8 @@ function SetConfigurationWindow()
 	gratzListLabel:SetShadowColor(0, 0, 0)
 	gratzListLabel:SetText("One message per line. Use '$player' to insert the player name.")
 
-	InterfaceOptions_AddCategory(Gratwurst.ui.panel);
+	category = Settings.RegisterCanvasLayoutCategory(Gratwurst.ui.panel, "Gratwurst")
+	Settings.RegisterAddOnCategory(category)	
 end
 
 function OnEventReceived(self, event, msg, author, ...)
@@ -285,7 +287,7 @@ local function slashcmd(msg, editbox)
 		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw enable   -> Enable Gratwurst")
 		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw disable  -> Disable Gratwurst")
 	elseif (msg == "c") then
-		InterfaceOptionsFrame_OpenToCategory("Gratwurst")
+		Settings.OpenToCategory(category.ID, "Gratwurst")
 	elseif (msg == "enable") then
 		GratwurstEnabled = true;
 		print("Gratwurst enabled.");
