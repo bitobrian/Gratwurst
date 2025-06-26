@@ -253,12 +253,27 @@ function SetConfigurationWindow()
 		ShowAddMessageDialog()
 	end)
 	
+	-- Restore Defaults button
 	local restoreButton = CreateFrame("Button", "GratwurstRestoreButton", backdropFrame, "UIPanelButtonTemplate")
-	restoreButton:SetSize(120, 30)
-	restoreButton:SetPoint("LEFT", addButton, "RIGHT", 10, 0)
+	restoreButton:SetSize(120, 25)
+	restoreButton:SetPoint("BOTTOMRIGHT", backdropFrame, "BOTTOMRIGHT", -10, 10)
 	restoreButton:SetText("Restore Defaults")
 	restoreButton:SetScript("OnClick", function()
-		RestoreDefaultMessages()
+		-- Show confirmation dialog
+		StaticPopupDialogs["GRATWURST_RESTORE_CONFIRM"] = {
+			text = "This will replace all your messages with the default ones. Are you sure?",
+			button1 = "Yes",
+			button2 = "Cancel",
+			OnAccept = function()
+				RestoreDefaultMessages()
+				RefreshMessageList()
+			end,
+			timeout = 0,
+			whileDead = true,
+			hideOnEscape = true,
+			preferredIndex = 3,
+		}
+		StaticPopup_Show("GRATWURST_RESTORE_CONFIRM")
 	end)
 	
 	-- Message count label
