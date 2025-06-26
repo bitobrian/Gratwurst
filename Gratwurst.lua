@@ -45,16 +45,16 @@ function InitializeSavedVariables(self)
 	-- Set default messages if no messages exist
 	if #GratwurstMessages == 0 then
 		GratwurstMessages = {
-			"Gratz $player!",
-			"Congratulations $player!",
-			"Well done $player!",
-			"Awesome achievement $player!",
-			"Nice work $player!",
-			"Gratz on the achievement $player!",
-			"Congratulations on your success $player!",
-			"Great job $player!",
-			"Achievement unlocked! Well done $player!",
-			"Gratz on the progress $player!"
+			"Gratz %c!",
+			"Congratulations %c on %v!",
+			"Well done %c (%l)!",
+			"Awesome achievement %c!",
+			"Nice work %c from <%g>!",
+			"Gratz on the achievement %c!",
+			"Congratulations %c! Level %l %C",
+			"Great job %c!",
+			"Achievement unlocked! Well done %c!",
+			"Gratz on the progress %c!"
 		}
 	end
 end
@@ -227,7 +227,7 @@ function SetConfigurationWindow()
 	gratzListLabel:SetTextColor(1, 0.8196079, 0)
 	gratzListLabel:SetShadowOffset(1, -1)
 	gratzListLabel:SetShadowColor(0, 0, 0)
-	gratzListLabel:SetText("Messages List")
+	gratzListLabel:SetText("Messages List (use %c for name, %l for level, %C for class, etc.)")
 
 	-- Create ScrollFrame for message list
 	local scrollFrame = CreateFrame("ScrollFrame", "GratwurstMessageScrollFrame", backdropFrame, "UIPanelScrollFrameTemplate")
@@ -374,10 +374,208 @@ end
 
 function FindAndReplacePlayerNameToken(message, author)
 	local result = message
-	local token = "$player"
-	local value = string.gsub(author, "%-.*", "")
-	result = string.gsub(result, token, value)
+	
+	-- Always use advanced placeholders (Lancaban mode is now default)
+	result = ReplaceLancabanPlaceholders(result, author)
+	
 	return result
+end
+
+function ReplaceLancabanPlaceholders(message, author)
+	local result = message
+	local playerName = string.gsub(author, "%-.*", "")
+	
+	-- Check if this is for preview (test data)
+	local isPreview = (author == "JohnnyAwesome-TestRealm")
+	
+	if isPreview then
+		-- Use example data for preview
+		local exampleLevel = 80
+		local exampleClass = "Paladin"
+		local exampleGuildName = "Awesome Guild"
+		local exampleGuildRank = "Member"
+		local maxLevel = 80
+		
+		-- %c - Character Name
+		result = string.gsub(result, "%%c", playerName)
+		
+		-- %n - name as used in %s (same as character name for now)
+		result = string.gsub(result, "%%n", playerName)
+		
+		-- %a - alias of current character (use short name)
+		result = string.gsub(result, "%%a", playerName)
+		
+		-- %m - main if available (not easily accessible, use current name)
+		result = string.gsub(result, "%%m", playerName)
+		
+		-- %A - Main Alias if available (not easily accessible, use current name)
+		result = string.gsub(result, "%%A", playerName)
+		
+		-- %l - level if available
+		result = string.gsub(result, "%%l", tostring(exampleLevel))
+		
+		-- %L - levels left to cap
+		local levelsLeft = math.max(0, maxLevel - exampleLevel)
+		result = string.gsub(result, "%%L", tostring(levelsLeft))
+		
+		-- %C - class if available
+		result = string.gsub(result, "%%C", exampleClass)
+		
+		-- %r - rank name
+		result = string.gsub(result, "%%r", exampleGuildRank)
+		
+		-- %v - achievement (example)
+		result = string.gsub(result, "%%v", "Level 80")
+		
+		-- %g - guild alias (short guild name)
+		local guildAlias = string.sub(exampleGuildName, 1, 10)
+		result = string.gsub(result, "%%g", guildAlias)
+		
+		-- %G - Guild Name
+		result = string.gsub(result, "%%G", exampleGuildName)
+		
+		-- Gratz-specific placeholders
+		-- #n - Name of the achiever
+		result = string.gsub(result, "#n", playerName)
+		
+		-- #g - Name of the guild
+		result = string.gsub(result, "#g", exampleGuildName)
+		
+		-- #f - Name of your faction
+		result = string.gsub(result, "#f", "Horde")
+		
+		-- #e - Name of the enemy faction
+		result = string.gsub(result, "#e", "Alliance")
+		
+		-- #b - Name of the battleground (example)
+		result = string.gsub(result, "#b", "Warsong Gulch")
+		
+		-- #v - achievement name (example)
+		result = string.gsub(result, "#v", "Level 80")
+		
+		-- Legacy $player support
+		result = string.gsub(result, "$player", playerName)
+		
+	else
+		-- Get player info if available (real data)
+		local level, class, guildName, guildRank = GetPlayerInfo(author)
+		
+		-- %c - Character Name
+		result = string.gsub(result, "%%c", playerName)
+		
+		-- %n - name as used in %s (same as character name for now)
+		result = string.gsub(result, "%%n", playerName)
+		
+		-- %a - alias of current character (use short name)
+		result = string.gsub(result, "%%a", playerName)
+		
+		-- %m - main if available (not easily accessible, use current name)
+		result = string.gsub(result, "%%m", playerName)
+		
+		-- %A - Main Alias if available (not easily accessible, use current name)
+		result = string.gsub(result, "%%A", playerName)
+		
+		-- %l - level if available
+		if level and level > 0 then
+			result = string.gsub(result, "%%l", tostring(level))
+		else
+			result = string.gsub(result, "%%l", "")
+		end
+		
+		-- %L - levels left to cap
+		if level and level > 0 then
+			local maxLevel = GetMaxPlayerLevel() or 80
+			local levelsLeft = math.max(0, maxLevel - level)
+			result = string.gsub(result, "%%L", tostring(levelsLeft))
+		else
+			result = string.gsub(result, "%%L", "")
+		end
+		
+		-- %C - class if available
+		if class and class ~= "" then
+			result = string.gsub(result, "%%C", class)
+		else
+			result = string.gsub(result, "%%C", "")
+		end
+		
+		-- %r - rank name
+		if guildRank and guildRank ~= "" then
+			result = string.gsub(result, "%%r", guildRank)
+		else
+			result = string.gsub(result, "%%r", "")
+		end
+		
+		-- %v - achievement (placeholder for now, would need achievement data from event)
+		result = string.gsub(result, "%%v", "their achievement")
+		
+		-- %g - guild alias (short guild name)
+		if guildName and guildName ~= "" then
+			local guildAlias = string.sub(guildName, 1, 10) -- First 10 chars as alias
+			result = string.gsub(result, "%%g", guildAlias)
+		else
+			result = string.gsub(result, "%%g", "")
+		end
+		
+		-- %G - Guild Name
+		if guildName and guildName ~= "" then
+			result = string.gsub(result, "%%G", guildName)
+		else
+			result = string.gsub(result, "%%G", "")
+		end
+		
+		-- Gratz-specific placeholders (these would need more context from the achievement event)
+		-- #n - Name of the achiever
+		result = string.gsub(result, "#n", playerName)
+		
+		-- #g - Name of the guild
+		if guildName and guildName ~= "" then
+			result = string.gsub(result, "#g", guildName)
+		else
+			result = string.gsub(result, "#g", "")
+		end
+		
+		-- #f - Name of your faction
+		local factionName = UnitFactionGroup("player") or ""
+		result = string.gsub(result, "#f", factionName)
+		
+		-- #e - Name of the enemy faction
+		local enemyFaction = (factionName == "Alliance") and "Horde" or "Alliance"
+		result = string.gsub(result, "#e", enemyFaction)
+		
+		-- #b - Name of the battleground (would need battleground context)
+		result = string.gsub(result, "#b", "")
+		
+		-- #v - achievement name (would need achievement data from event)
+		result = string.gsub(result, "#v", "")
+		
+		-- Legacy $player support
+		result = string.gsub(result, "$player", playerName)
+	end
+	
+	return result
+end
+
+function GetPlayerInfo(fullPlayerName)
+	local playerName = string.gsub(fullPlayerName, "%-.*", "")
+	local level = 0
+	local class = ""
+	local guildName = ""
+	local guildRank = ""
+	
+	-- Try to get info if player is in guild
+	local numGuildMembers = GetNumGuildMembers()
+	for i = 1, numGuildMembers do
+		local name, rank, rankIndex, playerLevel, playerClass, zone, note, officernote, online, status, classFileName = GetGuildRosterInfo(i)
+		if name and string.gsub(name, "%-.*", "") == playerName then
+			level = playerLevel or 0
+			class = playerClass or ""
+			guildRank = rank or ""
+			guildName = GetGuildInfo("player") or ""
+			break
+		end
+	end
+	
+	return level, class, guildName, guildRank
 end
 
 function Log(message)
@@ -445,16 +643,16 @@ end
 
 function RestoreDefaultMessages()
 	GratwurstMessages = {
-		"Gratz $player!",
-		"Congratulations $player!",
-		"Well done $player!",
-		"Awesome achievement $player!",
-		"Nice work $player!",
-		"Gratz on the achievement $player!",
-		"Congratulations on your success $player!",
-		"Great job $player!",
-		"Achievement unlocked! Well done $player!",
-		"Gratz on the progress $player!"
+		"Gratz %c!",
+		"Congratulations %c on %v!",
+		"Well done %c (%l)!",
+		"Awesome achievement %c!",
+		"Nice work %c from <%g>!",
+		"Gratz on the achievement %c!",
+		"Congratulations %c! Level %l %C",
+		"Great job %c!",
+		"Achievement unlocked! Well done %c!",
+		"Gratz on the progress %c!"
 	}
 	SaveMessagesToVariables()
 	RefreshMessageList()
@@ -582,7 +780,7 @@ end
 
 function ShowAddMessageDialog()
 	local dialog = CreateFrame("Frame", "GratwurstAddDialog", UIParent, "BackdropTemplate")
-	dialog:SetSize(450, 220)
+	dialog:SetSize(750, 400)
 	dialog:SetPoint("CENTER")
 	dialog:SetFrameStrata("DIALOG")
 	dialog:SetFrameLevel(100)
@@ -608,20 +806,14 @@ function ShowAddMessageDialog()
 	
 	-- Instructions
 	local instructions = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	instructions:SetPoint("TOP", title, "BOTTOM", 0, -15)
+	instructions:SetPoint("TOPLEFT", dialog, "TOPLEFT", 25, -50)
 	instructions:SetText("Enter your congratulations message:")
 	instructions:SetTextColor(1, 0.82, 0)
 	
-	-- Tip
-	local tip = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	tip:SetPoint("TOP", instructions, "BOTTOM", 0, -5)
-	tip:SetText("Tip: Use $player to insert the player's name")
-	tip:SetTextColor(0.8, 0.8, 0.8)
-	
 	-- Input box
 	local inputBox = CreateFrame("EditBox", "GratwurstAddInput", dialog, "InputBoxTemplate")
-	inputBox:SetSize(400, 25)
-	inputBox:SetPoint("TOP", tip, "BOTTOM", 0, -15)
+	inputBox:SetSize(350, 25)
+	inputBox:SetPoint("TOPLEFT", instructions, "BOTTOMLEFT", 0, -15)
 	inputBox:SetAutoFocus(true)
 	inputBox:SetScript("OnEnterPressed", function(self)
 		local text = self:GetText()
@@ -635,9 +827,14 @@ function ShowAddMessageDialog()
 	end)
 	
 	-- Preview
+	local previewLabel = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	previewLabel:SetPoint("TOPLEFT", inputBox, "BOTTOMLEFT", 0, -15)
+	previewLabel:SetText("Preview:")
+	previewLabel:SetTextColor(0.8, 0.8, 0.8)
+	
 	local previewText = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	previewText:SetPoint("TOPLEFT", inputBox, "BOTTOMLEFT", 0, -10)
-	previewText:SetWidth(400)
+	previewText:SetPoint("TOPLEFT", previewLabel, "BOTTOMLEFT", 0, -5)
+	previewText:SetWidth(350)
 	previewText:SetJustifyH("LEFT")
 	previewText:SetText("Gratz JohnnyAwesome!")
 	previewText:SetTextColor(0.5, 1, 0.5)
@@ -646,12 +843,56 @@ function ShowAddMessageDialog()
 	inputBox:SetScript("OnTextChanged", function(self)
 		local text = self:GetText()
 		if text and text ~= "" then
-			local preview = text:gsub("$player", "JohnnyAwesome")
+			local preview = ReplaceLancabanPlaceholders(text, "JohnnyAwesome-TestRealm")
 			previewText:SetText(preview)
 		else
 			previewText:SetText("Gratz JohnnyAwesome!")
 		end
 	end)
+	
+	-- Helper pane
+	local helperFrame = CreateFrame("Frame", nil, dialog, "BackdropTemplate")
+	helperFrame:SetSize(300, 320)
+	helperFrame:SetPoint("TOPRIGHT", dialog, "TOPRIGHT", -25, -50)
+	helperFrame:SetBackdrop({
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
+		tile = true,
+		tileSize = 12,
+		edgeSize = 8,
+		insets = { left = 5, right = 3, top = 3, bottom = 3 }
+	})
+	
+	local helperTitle = helperFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	helperTitle:SetPoint("TOP", helperFrame, "TOP", 0, -10)
+	helperTitle:SetText("Available Placeholders")
+	helperTitle:SetTextColor(1, 0.82, 0)
+	
+	local helperText = helperFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	helperText:SetPoint("TOPLEFT", helperFrame, "TOPLEFT", 15, -35)
+	helperText:SetWidth(270)
+	helperText:SetJustifyH("LEFT")
+	helperText:SetText(
+		"|cFFFFFF00Player Info:|r\n" ..
+		"%c - Character Name\n" ..
+		"%l - Player Level\n" ..
+		"%C - Player Class\n" ..
+		"%L - Levels to Cap\n\n" ..
+		"|cFFFFFF00Guild Info:|r\n" ..
+		"%g - Guild Alias\n" ..
+		"%G - Guild Name\n" ..
+		"%r - Guild Rank\n\n" ..
+		"|cFFFFFF00Achievement:|r\n" ..
+		"%v - Achievement Name\n" ..
+		"#n - Achiever Name\n" ..
+		"#g - Guild Name\n\n" ..
+		"|cFFFFFF00PvP Info:|r\n" ..
+		"#f - Your Faction\n" ..
+		"#e - Enemy Faction\n" ..
+		"#b - Battleground\n\n" ..
+		"|cFFFFFF00Legacy:|r\n" ..
+		"$player - Player Name"
+	)
 	
 	-- Buttons
 	local addButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
@@ -668,7 +909,7 @@ function ShowAddMessageDialog()
 	
 	local cancelButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
 	cancelButton:SetSize(80, 28)
-	cancelButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -25, 20)
+	cancelButton:SetPoint("BOTTOMLEFT", addButton, "BOTTOMRIGHT", 10, 0)
 	cancelButton:SetText("Cancel")
 	cancelButton:SetScript("OnClick", function()
 		dialog:Hide()
@@ -687,7 +928,7 @@ end
 
 function ShowEditMessageDialog(index, currentMessage)
 	local dialog = CreateFrame("Frame", "GratwurstEditDialog", UIParent, "BackdropTemplate")
-	dialog:SetSize(450, 220)
+	dialog:SetSize(750, 400)
 	dialog:SetPoint("CENTER")
 	dialog:SetFrameStrata("DIALOG")
 	dialog:SetFrameLevel(100)
@@ -713,20 +954,14 @@ function ShowEditMessageDialog(index, currentMessage)
 	
 	-- Instructions
 	local instructions = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	instructions:SetPoint("TOP", title, "BOTTOM", 0, -15)
+	instructions:SetPoint("TOPLEFT", dialog, "TOPLEFT", 25, -50)
 	instructions:SetText("Modify your congratulations message:")
 	instructions:SetTextColor(1, 0.82, 0)
 	
-	-- Tip
-	local tip = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	tip:SetPoint("TOP", instructions, "BOTTOM", 0, -5)
-	tip:SetText("Tip: Use $player to insert the player's name")
-	tip:SetTextColor(0.8, 0.8, 0.8)
-	
 	-- Input box
 	local inputBox = CreateFrame("EditBox", "GratwurstEditInput", dialog, "InputBoxTemplate")
-	inputBox:SetSize(400, 25)
-	inputBox:SetPoint("TOP", tip, "BOTTOM", 0, -15)
+	inputBox:SetSize(350, 25)
+	inputBox:SetPoint("TOPLEFT", instructions, "BOTTOMLEFT", 0, -15)
 	inputBox:SetText(currentMessage)
 	inputBox:SetAutoFocus(true)
 	inputBox:SetScript("OnEnterPressed", function(self)
@@ -741,11 +976,16 @@ function ShowEditMessageDialog(index, currentMessage)
 	end)
 	
 	-- Preview
+	local previewLabel = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	previewLabel:SetPoint("TOPLEFT", inputBox, "BOTTOMLEFT", 0, -15)
+	previewLabel:SetText("Preview:")
+	previewLabel:SetTextColor(0.8, 0.8, 0.8)
+	
 	local previewText = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	previewText:SetPoint("TOPLEFT", inputBox, "BOTTOMLEFT", 0, -10)
-	previewText:SetWidth(400)
+	previewText:SetPoint("TOPLEFT", previewLabel, "BOTTOMLEFT", 0, -5)
+	previewText:SetWidth(350)
 	previewText:SetJustifyH("LEFT")
-	local initialPreview = currentMessage:gsub("$player", "JohnnyAwesome")
+	local initialPreview = ReplaceLancabanPlaceholders(currentMessage, "JohnnyAwesome-TestRealm")
 	previewText:SetText(initialPreview)
 	previewText:SetTextColor(0.5, 1, 0.5)
 	
@@ -753,12 +993,56 @@ function ShowEditMessageDialog(index, currentMessage)
 	inputBox:SetScript("OnTextChanged", function(self)
 		local text = self:GetText()
 		if text and text ~= "" then
-			local preview = text:gsub("$player", "JohnnyAwesome")
+			local preview = ReplaceLancabanPlaceholders(text, "JohnnyAwesome-TestRealm")
 			previewText:SetText(preview)
 		else
 			previewText:SetText("Gratz JohnnyAwesome!")
 		end
 	end)
+	
+	-- Helper pane
+	local helperFrame = CreateFrame("Frame", nil, dialog, "BackdropTemplate")
+	helperFrame:SetSize(300, 320)
+	helperFrame:SetPoint("TOPRIGHT", dialog, "TOPRIGHT", -25, -50)
+	helperFrame:SetBackdrop({
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
+		tile = true,
+		tileSize = 12,
+		edgeSize = 8,
+		insets = { left = 5, right = 3, top = 3, bottom = 3 }
+	})
+	
+	local helperTitle = helperFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	helperTitle:SetPoint("TOP", helperFrame, "TOP", 0, -10)
+	helperTitle:SetText("Available Placeholders")
+	helperTitle:SetTextColor(1, 0.82, 0)
+	
+	local helperText = helperFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	helperText:SetPoint("TOPLEFT", helperFrame, "TOPLEFT", 15, -35)
+	helperText:SetWidth(270)
+	helperText:SetJustifyH("LEFT")
+	helperText:SetText(
+		"|cFFFFFF00Player Info:|r\n" ..
+		"%c - Character Name\n" ..
+		"%l - Player Level\n" ..
+		"%C - Player Class\n" ..
+		"%L - Levels to Cap\n\n" ..
+		"|cFFFFFF00Guild Info:|r\n" ..
+		"%g - Guild Alias\n" ..
+		"%G - Guild Name\n" ..
+		"%r - Guild Rank\n\n" ..
+		"|cFFFFFF00Achievement:|r\n" ..
+		"%v - Achievement Name\n" ..
+		"#n - Achiever Name\n" ..
+		"#g - Guild Name\n\n" ..
+		"|cFFFFFF00PvP Info:|r\n" ..
+		"#f - Your Faction\n" ..
+		"#e - Enemy Faction\n" ..
+		"#b - Battleground\n\n" ..
+		"|cFFFFFF00Legacy:|r\n" ..
+		"$player - Player Name"
+	)
 	
 	-- Buttons
 	local saveButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
@@ -775,7 +1059,7 @@ function ShowEditMessageDialog(index, currentMessage)
 	
 	local cancelButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
 	cancelButton:SetSize(80, 28)
-	cancelButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -25, 20)
+	cancelButton:SetPoint("BOTTOMLEFT", saveButton, "BOTTOMRIGHT", 10, 0)
 	cancelButton:SetText("Cancel")
 	cancelButton:SetScript("OnClick", function()
 		dialog:Hide()
