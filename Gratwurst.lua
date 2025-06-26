@@ -85,7 +85,7 @@ function SetConfigurationWindow()
 
 	-- Make a checkbox to disable randomizing the message
 	local checkbox = CreateFrame("CheckButton", "GratwurstCheckbox", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate")
-	checkbox:SetPoint("TOPLEFT", PaddingLeft, -50)
+	checkbox:SetPoint("TOPLEFT", PaddingLeft, -60)
 	checkbox:SetChecked(GratwurstShouldRandomize)
 	checkbox:SetScript("OnClick", function(self,event,arg1)
 		GratwurstShouldRandomize = self:GetChecked()
@@ -93,19 +93,35 @@ function SetConfigurationWindow()
 
 	-- Make a label for the checkbox
 	local checkboxLabel = checkbox:CreateFontString("GratwurstCheckboxLabel")
-	checkboxLabel:SetPoint("LEFT", checkbox, "RIGHT", 5, 0)
+	checkboxLabel:SetPoint("LEFT", checkbox, "RIGHT", 8, 0)
 	checkboxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
 	checkboxLabel:SetWidth(250)
 	checkboxLabel:SetHeight(20)
-	checkboxLabel:SetTextColor(1, 0.8196079, 0)
+	checkboxLabel:SetTextColor(1, 1, 1)
 	checkboxLabel:SetShadowOffset(1, -1)
 	checkboxLabel:SetShadowColor(0, 0, 0)
-	checkboxLabel:SetText("Randomize Message Selection")
+	checkboxLabel:SetText("Random message selection")
 
-	-- Create the max delay slide from 1 to 9
-	local maxDelaySlider = CreateFrame("Slider", "MaxDelaySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
-	maxDelaySlider:SetPoint("TOPLEFT", PaddingLeft, -90)
-	maxDelaySlider:SetWidth(150)
+	-- Create a container for sliders
+	local slidersContainer = CreateFrame("Frame", nil, Gratwurst.ui.panel)
+	slidersContainer:SetPoint("TOPLEFT", PaddingLeft, -90)
+	slidersContainer:SetSize(500, 80)
+
+	-- Max delay label
+	local maxDelaySliderLabel = slidersContainer:CreateFontString("MaxDelaySliderLabel")
+	maxDelaySliderLabel:SetPoint("TOPLEFT", 0, 0)
+	maxDelaySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 11)
+	maxDelaySliderLabel:SetWidth(200)
+	maxDelaySliderLabel:SetHeight(20)
+	maxDelaySliderLabel:SetTextColor(1, 1, 1)
+	maxDelaySliderLabel:SetShadowOffset(1, -1)
+	maxDelaySliderLabel:SetShadowColor(0, 0, 0)
+	maxDelaySliderLabel:SetText("Max Delay (seconds)")
+
+	-- Create the max delay slider
+	local maxDelaySlider = CreateFrame("Slider", "MaxDelaySlider", slidersContainer, "OptionsSliderTemplate")
+	maxDelaySlider:SetPoint("TOPLEFT", 0, -20)
+	maxDelaySlider:SetWidth(200)
 	maxDelaySlider:SetHeight(17)
 	maxDelaySlider:SetOrientation("HORIZONTAL")
 	maxDelaySlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
@@ -113,25 +129,48 @@ function SetConfigurationWindow()
 	maxDelaySlider:SetValue(GratwurstRandomDelayMax)
 	maxDelaySlider:SetValueStep(1)
 	maxDelaySlider:SetObeyStepOnDrag(true)
+	
+	-- Hide default Low/High labels
+	_G[maxDelaySlider:GetName().."Low"]:Hide()
+	_G[maxDelaySlider:GetName().."High"]:Hide()
+	
+	-- Max delay min/max labels
+	local maxDelayMinLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	maxDelayMinLabel:SetPoint("BOTTOMLEFT", maxDelaySlider, "BOTTOMLEFT", 0, -8)
+	maxDelayMinLabel:SetText("1")
+	maxDelayMinLabel:SetTextColor(0.7, 0.7, 0.7)
+	
+	local maxDelayMaxLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	maxDelayMaxLabel:SetPoint("BOTTOMRIGHT", maxDelaySlider, "BOTTOMRIGHT", 0, -8)
+	maxDelayMaxLabel:SetText("9")
+	maxDelayMaxLabel:SetTextColor(0.7, 0.7, 0.7)
+	
+	-- Max delay current value
+	local maxDelayValueLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	maxDelayValueLabel:SetPoint("BOTTOM", maxDelaySlider, "BOTTOM", 0, -20)
+	maxDelayValueLabel:SetText(GratwurstRandomDelayMax)
+	maxDelayValueLabel:SetTextColor(1, 0.82, 0)
+	
 	maxDelaySlider:SetScript("OnValueChanged", function(self,event,arg1)
 		GratwurstRandomDelayMax = self:GetValue()
+		maxDelayValueLabel:SetText(GratwurstRandomDelayMax)
 	end)
-	
-	-- Max delay label
-	local maxDelaySliderLabel = maxDelaySlider:CreateFontString("MaxDelaySliderLabel")
-	maxDelaySliderLabel:SetPoint("BOTTOM", maxDelaySlider, "TOP", 0, 2)
-	maxDelaySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	maxDelaySliderLabel:SetWidth(250)
-	maxDelaySliderLabel:SetHeight(20)
-	maxDelaySliderLabel:SetTextColor(1, 0.8196079, 0)
-	maxDelaySliderLabel:SetShadowOffset(1, -1)
-	maxDelaySliderLabel:SetShadowColor(0, 0, 0)
-	maxDelaySliderLabel:SetText("Max Delay in Seconds")
+
+	-- Frequency label
+	local MaxFrequencySliderLabel = slidersContainer:CreateFontString("MaxFrequencySliderLabel")
+	MaxFrequencySliderLabel:SetPoint("TOPLEFT", 250, 0)
+	MaxFrequencySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 11)
+	MaxFrequencySliderLabel:SetWidth(200)
+	MaxFrequencySliderLabel:SetHeight(20)
+	MaxFrequencySliderLabel:SetTextColor(1, 1, 1)
+	MaxFrequencySliderLabel:SetShadowOffset(1, -1)
+	MaxFrequencySliderLabel:SetShadowColor(0, 0, 0)
+	MaxFrequencySliderLabel:SetText("Frequency (%)")
 	
 	-- Create the Frequency slider
-	local MaxFrequencySlider = CreateFrame("Slider", "MaxFrequencySlider", Gratwurst.ui.panel, "OptionsSliderTemplate")
-	MaxFrequencySlider:SetPoint("TOPLEFT", PaddingLeft, -140)
-	MaxFrequencySlider:SetWidth(150)
+	local MaxFrequencySlider = CreateFrame("Slider", "MaxFrequencySlider", slidersContainer, "OptionsSliderTemplate")
+	MaxFrequencySlider:SetPoint("TOPLEFT", 250, -20)
+	MaxFrequencySlider:SetWidth(200)
 	MaxFrequencySlider:SetHeight(17)
 	MaxFrequencySlider:SetOrientation("HORIZONTAL")
 	MaxFrequencySlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
@@ -139,24 +178,36 @@ function SetConfigurationWindow()
 	MaxFrequencySlider:SetValue(GratwurstVariancePercentage)
 	MaxFrequencySlider:SetValueStep(1)
 	MaxFrequencySlider:SetObeyStepOnDrag(true)
+	
+	-- Hide default Low/High labels
+	_G[MaxFrequencySlider:GetName().."Low"]:Hide()
+	_G[MaxFrequencySlider:GetName().."High"]:Hide()
+	
+	-- Frequency min/max labels
+	local frequencyMinLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	frequencyMinLabel:SetPoint("BOTTOMLEFT", MaxFrequencySlider, "BOTTOMLEFT", 0, -8)
+	frequencyMinLabel:SetText("0%")
+	frequencyMinLabel:SetTextColor(0.7, 0.7, 0.7)
+	
+	local frequencyMaxLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	frequencyMaxLabel:SetPoint("BOTTOMRIGHT", MaxFrequencySlider, "BOTTOMRIGHT", 0, -8)
+	frequencyMaxLabel:SetText("100%")
+	frequencyMaxLabel:SetTextColor(0.7, 0.7, 0.7)
+	
+	-- Frequency current value
+	local frequencyValueLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	frequencyValueLabel:SetPoint("BOTTOM", MaxFrequencySlider, "BOTTOM", 0, -20)
+	frequencyValueLabel:SetText(GratwurstVariancePercentage .. "%")
+	frequencyValueLabel:SetTextColor(1, 0.82, 0)
+	
 	MaxFrequencySlider:SetScript("OnValueChanged", function(self,event,arg1)
 		GratwurstVariancePercentage = self:GetValue()
+		frequencyValueLabel:SetText(GratwurstVariancePercentage .. "%")
 	end)
-
-	-- Frequency label
-	local MaxFrequencySliderLabel = MaxFrequencySlider:CreateFontString("MaxFrequencySliderLabel")
-	MaxFrequencySliderLabel:SetPoint("BOTTOM", MaxFrequencySlider, "TOP", 0, 2)
-	MaxFrequencySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	MaxFrequencySliderLabel:SetWidth(250)
-	MaxFrequencySliderLabel:SetHeight(20)
-	MaxFrequencySliderLabel:SetTextColor(1, 0.8196079, 0)
-	MaxFrequencySliderLabel:SetShadowOffset(1, -1)
-	MaxFrequencySliderLabel:SetShadowColor(0, 0, 0)
-	MaxFrequencySliderLabel:SetText("Congratulation Frequency (%)")
 
 	-- Create the backdrop for the message list
 	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
-	backdropFrame:SetPoint("TOPLEFT", PaddingLeft, -180)
+	backdropFrame:SetPoint("TOPLEFT", PaddingLeft, -185)
 	backdropFrame:SetSize(520, 350)
 	backdropFrame:SetBackdrop( {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -167,20 +218,20 @@ function SetConfigurationWindow()
 		insets = { left = 5, right = 3, top = 3, bottom = 3	},
 	})
 
-	-- Create the Gratz List label with icon
+	-- Create the Messages List label inside the table area
 	local gratzListLabel = backdropFrame:CreateFontString("GratzListLabel")
-	gratzListLabel:SetPoint("BOTTOM", backdropFrame, "TOP", 0, 8)
-	gratzListLabel:SetFont("Fonts\\FRIZQT__.TTF", 13)
-	gratzListLabel:SetWidth(520)
+	gratzListLabel:SetPoint("TOPLEFT", backdropFrame, "TOPLEFT", 15, -15)
+	gratzListLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	gratzListLabel:SetWidth(490)
 	gratzListLabel:SetHeight(20)
 	gratzListLabel:SetTextColor(1, 0.8196079, 0)
 	gratzListLabel:SetShadowOffset(1, -1)
 	gratzListLabel:SetShadowColor(0, 0, 0)
-	gratzListLabel:SetText("Congratulations Messages (use $player for player name)")
+	gratzListLabel:SetText("Messages List")
 
 	-- Create ScrollFrame for message list
 	local scrollFrame = CreateFrame("ScrollFrame", "GratwurstMessageScrollFrame", backdropFrame, "UIPanelScrollFrameTemplate")
-	scrollFrame:SetPoint("TOPLEFT", backdropFrame, "TOPLEFT", 10, -45)
+	scrollFrame:SetPoint("TOPLEFT", backdropFrame, "TOPLEFT", 10, -40)
 	scrollFrame:SetPoint("BOTTOMRIGHT", backdropFrame, "BOTTOMRIGHT", -30, 45)
 	
 	-- Create the content frame for the scroll frame
