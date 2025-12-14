@@ -6,10 +6,7 @@ param(
     [string]$WowPath = "",
     [string]$AddonName = "Gratwurst",
 
-    [ValidateSet("retail", "ptr", "xptr", "classic", "classic_era", "classic_ptr")]
-    [string]$Flavor = "retail",
-
-    [int]$InstallIndex = -1,
+    [switch]$Beta,
 
     [switch]$DeepScan
 )
@@ -17,15 +14,12 @@ param(
 # Configuration
 $dateTimeNow = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 $versionMap = @{
-    retail      = "_retail_"
-    ptr         = "_ptr_"
-    xptr        = "_xptr_"
-    classic     = "_classic_"
-    classic_era = "_classic_era_"
-    classic_ptr = "_classic_ptr_"
+    retail = "_retail_"
+    beta   = "_beta_"
 }
 
-$version = $versionMap[$Flavor]
+$targetFlavor = if ($Beta) { "beta" } else { "retail" }
+$version = $versionMap[$targetFlavor]
 
 if ([string]::IsNullOrEmpty($version)) {
     Write-Error "Unknown flavor '$Flavor'."
@@ -73,11 +67,11 @@ function Resolve-FlavorFolder {
 
 function Get-WoWInstallations {
     param(
-        [string]$PreferFlavor = "retail",
         [switch]$Deep
     )
 
-    $flavorFolders = $versionMap.Values | Sort-Object -Unique
+    # Only look for retail and beta folders
+    $flavorFolders = @("_retail_", "_beta_")
 
     $candidateRoots = New-Object System.Collections.Generic.List[string]
 
@@ -132,13 +126,19 @@ function Get-WoWInstallations {
     $installations = New-Object System.Collections.Generic.List[object]
     foreach ($root in ($candidateRoots | Sort-Object -Unique)) {
         foreach ($flavorFolder in $flavorFolders) {
-            $addonsPath = Join-Path -Path $root -ChildPath "$flavorFolder\\Interface\\AddOns"
-            if (-not (Test-Path $addonsPath)) { continue }
-
-            $wowExe = Join-Path -Path $root -ChildPath "$flavorFolder\\Wow.exe"
-            $wowExe64 = Join-Path -Path $root -ChildPath "$flavorFolder\\WowClassic.exe"
+            $flavorPath = Join-Path -Path $root -ChildPath $flavorFolder
+            $addonsPath = Join-Path -Path $flavorPath -ChildPath "Interface\\AddOns"
+            
+            # Check if this flavor folder exists (as a directory)
+            if (-not (Test-Path -PathType Container $flavorPath)) {
+                continue
+            }
+            
+            # Look for exe in the flavor folder
+            $wowExe = Join-Path -Path $flavorPath -ChildPath "Wow.exe"
+            $wowExe64 = Join-Path -Path $flavorPath -ChildPath "WowClassic.exe"
             $exe = if (Test-Path $wowExe) { $wowExe } elseif (Test-Path $wowExe64) { $wowExe64 } else { $null }
-
+            
             $installations.Add([pscustomobject]@{
                 RootPath   = $root
                 FlavorPath = $flavorFolder
@@ -148,17 +148,15 @@ function Get-WoWInstallations {
         }
     }
 
-    # Sort preferred flavor first
-    $preferredFolder = Resolve-FlavorFolder -FlavorName $PreferFlavor
+    # Return installations sorted by root path and flavor (retail first, then beta)
     return @($installations |
-        Sort-Object @{ Expression = { $_.FlavorPath -ne $preferredFolder } }, RootPath, FlavorPath)
+        Sort-Object RootPath, @{ Expression = { $_.FlavorPath } ; Descending = $true })
 }
 
-function Resolve-WoWPath {
+function Resolve-WoWInstallation {
     param(
         [string]$ExplicitWowPath,
-        [string]$PreferFlavor,
-        [int]$Index,
+        [switch]$UseBeta,
         [switch]$Deep
     )
 
@@ -166,41 +164,40 @@ function Resolve-WoWPath {
         if (-not (Test-Path $ExplicitWowPath)) {
             throw "Provided -WowPath does not exist: $ExplicitWowPath"
         }
-        return $ExplicitWowPath
+        # When explicit path is given, use beta if -UseBeta is set
+        $flavorPath = if ($UseBeta) { "_beta_" } else { "_retail_" }
+        return [pscustomobject]@{
+            RootPath   = $ExplicitWowPath
+            FlavorPath = $flavorPath
+        }
     }
 
-    $installs = @(Get-WoWInstallations -PreferFlavor $PreferFlavor -Deep:$Deep)
+    $installs = @(Get-WoWInstallations -Deep:$Deep)
     if ($installs.Count -eq 0) {
         throw "Could not find a World of Warcraft installation. Use -WowPath or run: .\\dev.ps1 scan"
     }
 
-    # If an explicit index was given, use it
-    if ($Index -ge 0) {
-        if ($Index -ge $installs.Count) {
-            throw "InstallIndex out of range. Found $($installs.Count) installs."
-        }
-        return $installs[$Index].RootPath
+    # Determine which flavor to use
+    $targetFlavor = if ($UseBeta) { "_beta_" } else { "_retail_" }
+    
+    # Find an install matching the target flavor
+    $matching = @($installs | Where-Object { $_.FlavorPath -eq $targetFlavor })
+    if ($matching.Count -gt 0) {
+        return $matching[0]
     }
 
-    # If only one install exists (regardless of flavor), use it
+    # If target not found but only 1 install exists, use it
     if ($installs.Count -eq 1) {
-        return $installs[0].RootPath
+        return $installs[0]
     }
 
-    # If multiple installs exist, try to find one matching the preferred flavor
-    $preferredFolder = Resolve-FlavorFolder -FlavorName $PreferFlavor
-    $matching = @($installs | Where-Object { $_.FlavorPath -eq $preferredFolder })
-    if ($matching.Count -eq 1) {
-        return $matching[0].RootPath
-    }
-
-    # Ambiguous: multiple installs, none match preference, and no explicit index given
-    Write-Status "Multiple WoW installs detected. Re-run with -InstallIndex or -WowPath:" $colors.Warning
+    # Ambiguous: can't find the target flavor and multiple installs exist
+    Write-Status "Could not find WoW $targetFlavor. Available installations:" $colors.Warning
     for ($i = 0; $i -lt $installs.Count; $i++) {
         $it = $installs[$i]
-        Write-Host ("  [{0}] {1} {2} (AddOns: {3})" -f $i, $it.RootPath, $it.FlavorPath, $it.AddOnsPath)
+        Write-Host ("  - {0} {1}" -f $it.RootPath, $it.FlavorPath)
     }
-    throw "Multiple installations found. Specify -InstallIndex or -WowPath."
+    throw "Run .\\dev.ps1 scan to see available options."
 }
 
 function Get-AddonSourceRoot {
@@ -350,40 +347,38 @@ function Copy-AddonFiles {
 
 function Show-Help {
     Write-Host @"
-Addon Copy Script
+Addon Dev Script
 ===========================
 
-Usage: .\dev.ps1 [Action] [-WowPath <path>] [-AddonName <name>] [-Flavor <retail|classic|...>] [-InstallIndex <n>] [-DeepScan]
+Usage: .\dev.ps1 [Action] [-Beta] [-WowPath <path>] [-AddonName <name>] [-DeepScan]
 
 Actions:
   copy    - Copy addon to WoW directory (default)
   backup  - Create backup of existing addon
   clean   - Remove addon from WoW directory
-    scan    - List detected WoW installs and AddOns paths
+  scan    - List detected WoW installations
   help    - Show this help message
 
 Parameters:
-  -WowPath    - Custom WoW installation path
+  -Beta       - Target beta install instead of retail
+  -WowPath    - Custom WoW installation path (overrides auto-detect)
   -AddonName  - Custom addon name (default: Gratwurst)
-    -Flavor     - Which client folder to target (default: retail)
-    -InstallIndex - When multiple installs are found, choose index from `scan`
-    -DeepScan   - Search more places (slower)
+  -DeepScan   - Search more drives (slower)
 
 Examples:
-  .\dev.ps1                    # Copy addon
-  .\dev.ps1 backup             # Create backup only
+  .\dev.ps1                    # Copy addon to retail
+  .\dev.ps1 -Beta              # Copy addon to beta
+  .\dev.ps1 backup             # Backup only
   .\dev.ps1 clean              # Remove addon
-    .\dev.ps1 scan               # Show detected installs
-    .\dev.ps1 -Flavor classic    # Target Classic install (auto-detect)
-    .\dev.ps1 copy -InstallIndex 1 # Choose a specific detected install
-    .\dev.ps1 -WowPath "D:\Games\World of Warcraft"  # Custom WoW root path
+  .\dev.ps1 scan               # Show detected installations
+  .\dev.ps1 -Beta -DeepScan    # Copy to beta with deeper folder search
 
 "@ -ForegroundColor Cyan
 }
 
 # Resolve WoW paths now that functions are defined
 $resolvedWowPath = $null
-$resolvedFlavorFolder = $version
+$resolvedFlavorFolder = $null
 $wowAddonsPath = $null
 $addonPath = $null
 
@@ -392,7 +387,9 @@ if ($Action.ToLower() -ne "help") {
         if ($Action.ToLower() -eq "scan") {
             # scan action doesn't require resolving a single target path
         } else {
-            $resolvedWowPath = Resolve-WoWPath -ExplicitWowPath $WowPath -PreferFlavor $Flavor -Index $InstallIndex -Deep:$DeepScan
+            $install = Resolve-WoWInstallation -ExplicitWowPath $WowPath -UseBeta:$Beta -Deep:$DeepScan
+            $resolvedWowPath = $install.RootPath
+            $resolvedFlavorFolder = $install.FlavorPath
             $wowAddonsPath = Join-Path -Path $resolvedWowPath -ChildPath "$resolvedFlavorFolder\\Interface\\AddOns"
             $addonPath = Join-Path -Path $wowAddonsPath -ChildPath $AddonName
         }
@@ -406,7 +403,10 @@ if ($Action.ToLower() -ne "help") {
 Write-Status "=== Addon Dev Script ===" $colors.Info
 Write-Status "Action: $Action" $colors.Info
 Write-Status "Addon Name: $AddonName" $colors.Path
-Write-Status "Flavor: $Flavor ($resolvedFlavorFolder)" $colors.Info
+if ($resolvedFlavorFolder) {
+    $flavorLabel = if ($Beta) { "beta" } else { "retail" }
+    Write-Status "Target: $flavorLabel" $colors.Info
+}
 if (-not [string]::IsNullOrEmpty($resolvedWowPath)) {
     Write-Status "WoW Path: $resolvedWowPath" $colors.Path
     Write-Status "AddOns Path: $wowAddonsPath" $colors.Path
@@ -429,15 +429,12 @@ try {
             Write-Status "Found $($installs.Count) WoW installation(s):" $colors.Success
             for ($i = 0; $i -lt $installs.Count; $i++) {
                 $it = $installs[$i]
-                Write-Host ("[{0}] {1}" -f $i, $it.RootPath) -ForegroundColor $colors.Path
-                Write-Host ("     > Flavor: {0}" -f $it.FlavorPath)
+                $flavor = if ($it.FlavorPath -eq "_beta_") { "beta" } else { "retail" }
+                Write-Host ("[{0}] {1} ({2})" -f $i, $it.RootPath, $flavor) -ForegroundColor $colors.Path
                 Write-Host ("     > AddOns: {0}" -f $it.AddOnsPath)
-                if ($it.ExePath) {
-                    Write-Host ("     > Exe: {0}" -f $it.ExePath)
-                }
             }
             Write-Host
-            Write-Status "To copy addon to a specific install, use: .\\dev.ps1 copy -InstallIndex <n>" $colors.Info
+            Write-Status "Use -Beta flag to copy to beta, or specify -WowPath for custom location." $colors.Info
         }
         "clean" {
             Write-Status "Cleaning addon installation..." $colors.Warning
