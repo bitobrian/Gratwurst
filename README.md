@@ -3,24 +3,18 @@ A delicious automatic congratulations messaging addon for World of Warcraft.
 
 ## Features
 
-- [x] Input and save grats message
-- [x] Set and save delay
-- [x] Choose from randomized string list
-- [x] **NEW in 1.8.0**: Individual message management with listbox interface
-- [x] **NEW in 1.8.0**: Add, edit, delete, and reorder messages
-- [x] **NEW in 1.8.0**: Comprehensive default message list
-- [x] **NEW in 1.8.0**: Message count display
-- [x] **NEW in 1.8.0**: Restore defaults functionality
+- Automatic grats for guild achievements
+- Message list management (add/edit/delete/reorder)
+- Optional random selection, delay, and frequency controls
+- Placeholder support + live preview
 
 ## Usage
 
-Make changes and deploy to your WoW installation.
+Gratwurst listens for guild achievements and (optionally) sends a randomized congratulatory message to guild chat.
 
-### Quick Deploy
-
-Run `.\dev.ps1` to automatically detect your WoW installation and copy the addon. Or use `.\dev.ps1 scan` to list all detected WoW installations if you have multiple.
-
-On VS Code, you can use the launch.json with `dev.ps1` to quickly back-up and copy the addon using F5.
+Open the config via:
+- `Settings` → `AddOns` → `Gratwurst`
+- Or `/gw c`
 
 ### Message Management
 
@@ -32,11 +26,43 @@ The addon now features a modern listbox interface for managing your congratulato
 - **Reorder Messages**: Use ↑ and ↓ buttons to change message order
 - **Restore Defaults**: Click "Restore Defaults" to reset to the built-in message list
 
+### Settings
+
+- **Random message selection**: random vs first message
+- **Max Delay (seconds)**: random delay (1–9)
+- **Frequency (%)**: chance to send a message
+
+### Slash Commands
+
+- `/gw c` (or `/gratwurst c`): open configuration
+- `/gw enable`: enable the addon
+- `/gw disable`: disable the addon
+- `/gw debug`: print debug output and simulate a grats message locally
+
 ### Message Format
 
-Use `$player` in your messages to automatically insert the player's name:
-- `"Gratz $player!"` becomes `"Gratz John!"`
-- `"Congratulations on your achievement $player!"` becomes `"Congratulations on your achievement John!"`
+Gratwurst supports a placeholder system for message templates.
+
+Common placeholders:
+- `%c` character name
+- `%l` level
+- `%C` class
+- `%g` short guild name (alias)
+- `%G` full guild name
+- `%r` guild rank
+
+Legacy placeholder (still supported):
+- `$player` inserts the character name
+
+Tip: the Add/Edit dialogs show a full placeholder list and live preview.
+
+## Development
+
+### Quick Deploy
+
+Run `\.\dev.ps1` to auto-detect your WoW install and copy the addon. Use `\.\dev.ps1 scan` if you have multiple installs.
+
+`dev.ps1` commands: `copy` (default), `scan`, `backup`, `clean`, plus `-Beta` for `_beta_`.
 
 ## Contributing
 

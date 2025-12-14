@@ -2,9 +2,16 @@ package-as: Gratwurst
 enable-nolib-creation: no
 
 ignore: # Files and directories beginning with a dot (such as .git) are automatically ignored, as is the pgkmeta file itself.
-    - media
+    - backlog
+    - .github
+    - .vscode
+    - dev.ps1
     - BackupAndCopyAddon.ps1
     - README.md
+    - CHANGELOG.md
+    - updates.txt
+    - LICENSE
+    - pkgmeta.yaml
 
 manual-changelog: updates.txt
 

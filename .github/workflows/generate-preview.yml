@@ -30,7 +30,9 @@ jobs:
         cp ${{steps.init.outputs.addon_name}}.lua .releases/${{steps.init.outputs.addon_name}}
         cp ${{steps.init.outputs.addon_name}}.toc .releases/${{steps.init.outputs.addon_name}}
         cp ${{steps.init.outputs.addon_name}}.xml .releases/${{steps.init.outputs.addon_name}}
-        cp updates.txt .releases/updates.txt
+        if [ -d "media" ]; then
+          cp -R media .releases/${{steps.init.outputs.addon_name}}/
+        fi
 
     - name: Create preview zip
       run: |

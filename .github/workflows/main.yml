@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Get name of addon
       id: init
@@ -21,8 +21,8 @@ jobs:
         addon_name=$(ls *.toc)
         addon_name=$(basename $addon_name .toc)
         tag_name=${addon_name}-release-v${{github.event.inputs.version}}
-        echo "::set-output name=addon_name::${addon_name}"
-        echo "::set-output name=tag_name::${tag_name}"
+        echo "addon_name=${addon_name}" >> $GITHUB_OUTPUT
+        echo "tag_name=${tag_name}" >> $GITHUB_OUTPUT
 
     - name: Make folder for zips
       run: |
@@ -30,7 +30,9 @@ jobs:
         cp ${{steps.init.outputs.addon_name}}.lua .releases/${{steps.init.outputs.addon_name}}
         cp ${{steps.init.outputs.addon_name}}.toc .releases/${{steps.init.outputs.addon_name}}
         cp ${{steps.init.outputs.addon_name}}.xml .releases/${{steps.init.outputs.addon_name}}
-        cp updates.txt .releases/updates.txt
+        if [ -d "media" ]; then
+          cp -R media .releases/${{steps.init.outputs.addon_name}}/
+        fi
 
     - name: Create retail zip
       run: |

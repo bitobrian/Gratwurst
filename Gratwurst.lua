@@ -4,6 +4,23 @@ ConfigTitle = "Gratwurst 1.8.0 Config"
 PaddingLeft = 20
 local category
 
+local UI = {
+	PAD_X = 20,
+	PAD_Y = 20,
+	PANEL_WIDTH = 560,
+	SLIDER_WIDTH = 240,
+	SLIDER_HEIGHT = 17,
+	LIST_WIDTH = 560,
+	LIST_HEIGHT = 350,
+	LIST_INNER_PAD = 10,
+	ROW_HEIGHT = 30,
+	ROW_SPACING = 3,
+	BTN_W = 48,
+	BTN_H = 20,
+	BTN_GAP = 4,
+	BTN_RIGHT_PAD = 6,
+}
+
 function InitializeAddon(self)
 	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
 	self:RegisterEvent("PLAYER_LOGIN")
@@ -80,7 +97,8 @@ local function HasAnyNonEmptyMessage()
 end
 
 function SetConfigurationWindow()
-	local luaFrame = CreateFrame("Frame", "GratwurstPanel", InterfaceOptionsFramePanelContainer)
+	local parent = SettingsPanel or InterfaceOptionsFramePanelContainer or UIParent
+	local luaFrame = CreateFrame("Frame", "GratwurstPanel", parent)
 
 	local titleBorder = luaFrame:CreateTexture("UnneccessaryGlobalFrameNameTitleBorder")
 	titleBorder:SetWidth(320)
@@ -105,7 +123,7 @@ function SetConfigurationWindow()
 
 	-- Make a checkbox to disable randomizing the message
 	local checkbox = CreateFrame("CheckButton", "GratwurstCheckbox", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate")
-	checkbox:SetPoint("TOPLEFT", PaddingLeft, -60)
+	checkbox:SetPoint("TOPLEFT", UI.PAD_X, -60)
 	checkbox:SetChecked(GratwurstShouldRandomize)
 	checkbox:SetScript("OnClick", function(self,event,arg1)
 		GratwurstShouldRandomize = self:GetChecked()
@@ -124,8 +142,8 @@ function SetConfigurationWindow()
 
 	-- Create a container for sliders
 	local slidersContainer = CreateFrame("Frame", nil, Gratwurst.ui.panel)
-	slidersContainer:SetPoint("TOPLEFT", PaddingLeft, -90)
-	slidersContainer:SetSize(500, 80)
+	slidersContainer:SetPoint("TOPLEFT", UI.PAD_X, -92)
+	slidersContainer:SetSize(UI.LIST_WIDTH, 80)
 
 	-- Max delay label
 	local maxDelaySliderLabel = slidersContainer:CreateFontString("MaxDelaySliderLabel")
@@ -141,8 +159,8 @@ function SetConfigurationWindow()
 	-- Create the max delay slider
 	local maxDelaySlider = CreateFrame("Slider", "MaxDelaySlider", slidersContainer, "OptionsSliderTemplate")
 	maxDelaySlider:SetPoint("TOPLEFT", 0, -20)
-	maxDelaySlider:SetWidth(200)
-	maxDelaySlider:SetHeight(17)
+	maxDelaySlider:SetWidth(UI.SLIDER_WIDTH)
+	maxDelaySlider:SetHeight(UI.SLIDER_HEIGHT)
 	maxDelaySlider:SetOrientation("HORIZONTAL")
 	maxDelaySlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
 	maxDelaySlider:SetMinMaxValues(1,9)
@@ -178,9 +196,9 @@ function SetConfigurationWindow()
 
 	-- Frequency label
 	local MaxFrequencySliderLabel = slidersContainer:CreateFontString("MaxFrequencySliderLabel")
-	MaxFrequencySliderLabel:SetPoint("TOPLEFT", 250, 0)
+	MaxFrequencySliderLabel:SetPoint("TOPRIGHT", slidersContainer, "TOPRIGHT", 0, 0)
 	MaxFrequencySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 11)
-	MaxFrequencySliderLabel:SetWidth(200)
+	MaxFrequencySliderLabel:SetWidth(UI.SLIDER_WIDTH)
 	MaxFrequencySliderLabel:SetHeight(20)
 	MaxFrequencySliderLabel:SetTextColor(1, 1, 1)
 	MaxFrequencySliderLabel:SetShadowOffset(1, -1)
@@ -189,9 +207,9 @@ function SetConfigurationWindow()
 	
 	-- Create the Frequency slider
 	local MaxFrequencySlider = CreateFrame("Slider", "MaxFrequencySlider", slidersContainer, "OptionsSliderTemplate")
-	MaxFrequencySlider:SetPoint("TOPLEFT", 250, -20)
-	MaxFrequencySlider:SetWidth(200)
-	MaxFrequencySlider:SetHeight(17)
+	MaxFrequencySlider:SetPoint("TOPRIGHT", slidersContainer, "TOPRIGHT", 0, -20)
+	MaxFrequencySlider:SetWidth(UI.SLIDER_WIDTH)
+	MaxFrequencySlider:SetHeight(UI.SLIDER_HEIGHT)
 	MaxFrequencySlider:SetOrientation("HORIZONTAL")
 	MaxFrequencySlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
 	MaxFrequencySlider:SetMinMaxValues(0,100)
@@ -227,8 +245,8 @@ function SetConfigurationWindow()
 
 	-- Create the backdrop for the message list
 	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
-	backdropFrame:SetPoint("TOPLEFT", PaddingLeft, -185)
-	backdropFrame:SetSize(520, 350)
+	backdropFrame:SetPoint("TOPLEFT", UI.PAD_X, -188)
+	backdropFrame:SetSize(UI.LIST_WIDTH, UI.LIST_HEIGHT)
 	backdropFrame:SetBackdrop( {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
 		edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
@@ -240,23 +258,53 @@ function SetConfigurationWindow()
 
 	-- Create the Messages List label inside the table area
 	local gratzListLabel = backdropFrame:CreateFontString("GratzListLabel")
-	gratzListLabel:SetPoint("TOPLEFT", backdropFrame, "TOPLEFT", 15, -15)
+	gratzListLabel:SetPoint("TOP", backdropFrame, "TOP", 0, -15)
 	gratzListLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	gratzListLabel:SetWidth(490)
+	gratzListLabel:SetWidth(UI.LIST_WIDTH - 30)
 	gratzListLabel:SetHeight(20)
 	gratzListLabel:SetTextColor(1, 0.8196079, 0)
 	gratzListLabel:SetShadowOffset(1, -1)
 	gratzListLabel:SetShadowColor(0, 0, 0)
 	gratzListLabel:SetText("Messages List")
 
+	-- Message count label (top-right, avoids overlapping bottom buttons)
+	local messageCountLabel = backdropFrame:CreateFontString("MessageCountLabel")
+	messageCountLabel:SetPoint("TOPRIGHT", backdropFrame, "TOPRIGHT", -18, -16)
+	messageCountLabel:SetFont("Fonts\\FRIZQT__.TTF", 11)
+	messageCountLabel:SetTextColor(0.8, 0.8, 0.8)
+	messageCountLabel:SetText("Messages: 0")
+	Gratwurst.ui.messageCountLabel = messageCountLabel
+
+	-- Column headers
+	local headerFrame = CreateFrame("Frame", nil, backdropFrame)
+	headerFrame:SetPoint("TOPLEFT", backdropFrame, "TOPLEFT", UI.LIST_INNER_PAD, -38)
+	headerFrame:SetPoint("TOPRIGHT", backdropFrame, "TOPRIGHT", -(UI.LIST_INNER_PAD + 18), -38) -- 18 ~= scrollbar gutter
+	headerFrame:SetHeight(16)
+
+	local headerBg = headerFrame:CreateTexture(nil, "BACKGROUND")
+	headerBg:SetAllPoints()
+	headerBg:SetColorTexture(0, 0, 0, 0.25)
+
+	local headerNum = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	headerNum:SetPoint("LEFT", headerFrame, "LEFT", 8, 0)
+	headerNum:SetText("#")
+
+	local headerMsg = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	headerMsg:SetPoint("LEFT", headerFrame, "LEFT", 34, 0)
+	headerMsg:SetText("Message")
+
+	local headerActions = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	headerActions:SetPoint("RIGHT", headerFrame, "RIGHT", -8, 0)
+	headerActions:SetText("Actions")
+
 	-- Create ScrollFrame for message list
 	local scrollFrame = CreateFrame("ScrollFrame", "GratwurstMessageScrollFrame", backdropFrame, "UIPanelScrollFrameTemplate")
-	scrollFrame:SetPoint("TOPLEFT", backdropFrame, "TOPLEFT", 10, -40)
-	scrollFrame:SetPoint("BOTTOMRIGHT", backdropFrame, "BOTTOMRIGHT", -30, 45)
+	scrollFrame:SetPoint("TOPLEFT", headerFrame, "BOTTOMLEFT", 0, -6)
+	scrollFrame:SetPoint("BOTTOMRIGHT", backdropFrame, "BOTTOMRIGHT", -30, 42)
 	
 	-- Create the content frame for the scroll frame
 	local contentFrame = CreateFrame("Frame", "GratwurstMessageContentFrame", scrollFrame)
-	contentFrame:SetSize(470, 100) -- Will be adjusted dynamically
+	contentFrame:SetSize(UI.LIST_WIDTH - 70, 100) -- width adjusted by anchors at runtime; height updated dynamically
 	scrollFrame:SetScrollChild(contentFrame)
 	
 	-- Store references for later use
@@ -266,8 +314,8 @@ function SetConfigurationWindow()
 	
 	-- Create control buttons below the scroll frame
 	local addButton = CreateFrame("Button", "GratwurstAddButton", backdropFrame, "UIPanelButtonTemplate")
-	addButton:SetSize(100, 30)
-	addButton:SetPoint("BOTTOMLEFT", backdropFrame, "BOTTOMLEFT", 15, 8)
+	addButton:SetSize(130, 24)
+	addButton:SetPoint("BOTTOMLEFT", backdropFrame, "BOTTOMLEFT", 15, 10)
 	addButton:SetText("Add Message")
 	addButton:SetScript("OnClick", function()
 		ShowAddMessageDialog()
@@ -275,8 +323,8 @@ function SetConfigurationWindow()
 	
 	-- Restore Defaults button
 	local restoreButton = CreateFrame("Button", "GratwurstRestoreButton", backdropFrame, "UIPanelButtonTemplate")
-	restoreButton:SetSize(120, 25)
-	restoreButton:SetPoint("BOTTOMRIGHT", backdropFrame, "BOTTOMRIGHT", -10, 10)
+	restoreButton:SetSize(130, 24)
+	restoreButton:SetPoint("BOTTOMRIGHT", backdropFrame, "BOTTOMRIGHT", -15, 10)
 	restoreButton:SetText("Restore Defaults")
 	restoreButton:SetScript("OnClick", function()
 		-- Show confirmation dialog
@@ -296,14 +344,6 @@ function SetConfigurationWindow()
 		StaticPopup_Show("GRATWURST_RESTORE_CONFIRM")
 	end)
 	
-	-- Message count label
-	local messageCountLabel = backdropFrame:CreateFontString("MessageCountLabel")
-	messageCountLabel:SetPoint("BOTTOMRIGHT", backdropFrame, "BOTTOMRIGHT", -15, 15)
-	messageCountLabel:SetFont("Fonts\\FRIZQT__.TTF", 11)
-	messageCountLabel:SetTextColor(0.8, 0.8, 0.8)
-	messageCountLabel:SetText("Messages: 0")
-	Gratwurst.ui.messageCountLabel = messageCountLabel
-
 	category = Settings.RegisterCanvasLayoutCategory(Gratwurst.ui.panel, "Gratwurst")
 	Settings.RegisterAddOnCategory(category)
 	
@@ -703,15 +743,16 @@ function RefreshMessageList()
 	Gratwurst.ui.messageFrames = {}
 	
 	local contentFrame = Gratwurst.ui.contentFrame
-	local frameHeight = 35
-	local spacing = 3
+	local frameHeight = UI.ROW_HEIGHT
+	local spacing = UI.ROW_SPACING
 	local totalHeight = 0
 	
 	-- Create message frames
 	for i, message in ipairs(GratwurstMessages) do
 		local messageFrame = CreateFrame("Frame", "GratwurstMessageFrame" .. i, contentFrame)
-		messageFrame:SetSize(450, frameHeight)
+		messageFrame:SetHeight(frameHeight)
 		messageFrame:SetPoint("TOPLEFT", contentFrame, "TOPLEFT", 0, -totalHeight)
+		messageFrame:SetPoint("TOPRIGHT", contentFrame, "TOPRIGHT", 0, -totalHeight)
 		
 		-- Background highlight
 		local background = messageFrame:CreateTexture("GratwurstMessageBackground" .. i)
@@ -726,24 +767,16 @@ function RefreshMessageList()
 		local numberText = messageFrame:CreateFontString("GratwurstMessageNumber" .. i)
 		numberText:SetPoint("LEFT", messageFrame, "LEFT", 8, 0)
 		numberText:SetFont("Fonts\\FRIZQT__.TTF", 11)
-		numberText:SetWidth(20)
+		numberText:SetWidth(24)
 		numberText:SetJustifyH("CENTER")
 		numberText:SetText(i)
 		numberText:SetTextColor(0.7, 0.7, 0.7)
 		
 		-- Message text
-		local messageText = messageFrame:CreateFontString("GratwurstMessageText" .. i)
-		messageText:SetPoint("LEFT", numberText, "RIGHT", 8, 0)
-		messageText:SetFont("Fonts\\FRIZQT__.TTF", 11)
-		messageText:SetWidth(270)
-		messageText:SetJustifyH("LEFT")
-		messageText:SetText(message)
-		messageText:SetTextColor(1, 1, 1)
-		
 		-- Move up button
 		local upButton = CreateFrame("Button", "GratwurstUpButton" .. i, messageFrame, "UIPanelButtonTemplate")
-		upButton:SetSize(30, 22)
-		upButton:SetPoint("RIGHT", messageFrame, "RIGHT", -5, 0)
+		upButton:SetSize(UI.BTN_W, UI.BTN_H)
+		upButton:SetPoint("RIGHT", messageFrame, "RIGHT", -UI.BTN_RIGHT_PAD, 0)
 		upButton:SetText("Up")
 		upButton:SetScript("OnClick", function()
 			MoveMessageUp(i)
@@ -752,11 +785,11 @@ function RefreshMessageList()
 			upButton:Disable()
 			upButton:SetAlpha(0.3)
 		end
-		
+
 		-- Move down button
 		local downButton = CreateFrame("Button", "GratwurstDownButton" .. i, messageFrame, "UIPanelButtonTemplate")
-		downButton:SetSize(40, 22)
-		downButton:SetPoint("RIGHT", upButton, "LEFT", -2, 0)
+		downButton:SetSize(UI.BTN_W, UI.BTN_H)
+		downButton:SetPoint("RIGHT", upButton, "LEFT", -UI.BTN_GAP, 0)
 		downButton:SetText("Down")
 		downButton:SetScript("OnClick", function()
 			MoveMessageDown(i)
@@ -765,25 +798,43 @@ function RefreshMessageList()
 			downButton:Disable()
 			downButton:SetAlpha(0.3)
 		end
-		
+
 		-- Edit button
 		local editButton = CreateFrame("Button", "GratwurstEditButton" .. i, messageFrame, "UIPanelButtonTemplate")
-		editButton:SetSize(45, 22)
-		editButton:SetPoint("RIGHT", downButton, "LEFT", -2, 0)
+		editButton:SetSize(UI.BTN_W, UI.BTN_H)
+		editButton:SetPoint("RIGHT", downButton, "LEFT", -UI.BTN_GAP, 0)
 		editButton:SetText("Edit")
 		editButton:SetScript("OnClick", function()
 			ShowEditMessageDialog(i, message)
 		end)
-		
+
 		-- Delete button
 		local deleteButton = CreateFrame("Button", "GratwurstDeleteButton" .. i, messageFrame, "UIPanelButtonTemplate")
-		deleteButton:SetSize(50, 22)
-		deleteButton:SetPoint("RIGHT", editButton, "LEFT", -2, 0)
-		deleteButton:SetText("Delete")
+		deleteButton:SetSize(UI.BTN_W, UI.BTN_H)
+		deleteButton:SetPoint("RIGHT", editButton, "LEFT", -UI.BTN_GAP, 0)
+		deleteButton:SetText("Del")
 		deleteButton:SetScript("OnClick", function()
 			-- Show confirmation dialog for delete
 			StaticPopup_Show("GRATWURST_DELETE_CONFIRM", message, nil, i)
 		end)
+
+		-- Message text (auto-fills space between number and action buttons)
+		local messageText = messageFrame:CreateFontString("GratwurstMessageText" .. i)
+		messageText:SetPoint("LEFT", numberText, "RIGHT", 8, 0)
+		messageText:SetPoint("RIGHT", deleteButton, "LEFT", -10, 0)
+		messageText:SetFont("Fonts\\FRIZQT__.TTF", 11)
+		messageText:SetJustifyH("LEFT")
+		messageText:SetWordWrap(false)
+		messageText:SetMaxLines(1)
+		messageText:SetText(message)
+		messageText:SetTextColor(1, 1, 1)
+
+		-- subtle separator before actions
+		local sep = messageFrame:CreateTexture(nil, "ARTWORK")
+		sep:SetPoint("TOPRIGHT", deleteButton, "TOPLEFT", -6, -4)
+		sep:SetPoint("BOTTOMRIGHT", deleteButton, "BOTTOMLEFT", -6, 4)
+		sep:SetWidth(1)
+		sep:SetColorTexture(1, 1, 1, 0.08)
 		
 		table.insert(Gratwurst.ui.messageFrames, messageFrame)
 		totalHeight = totalHeight + frameHeight + spacing
