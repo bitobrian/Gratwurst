@@ -1,3 +1,17 @@
+1.8.0 - Complete UI overhaul with modern message management!
+        Replaced EditBox with ScrollFrame-based message list.
+        Added individual message management (add, edit, delete, reorder).
+        Included comprehensive default message list.
+        Added message count display and restore defaults functionality.
+        Improved user experience with movable dialogs and keyboard shortcuts.
+        Automatic migration from old format - no data loss.
+        Added advanced placeholder system with 15+ placeholders!
+        Player info: %c (name), %l (level), %C (class), %L (levels to cap)
+        Guild info: %g (guild alias), %G (guild name), %r (rank)
+        Achievement: %v (achievement), #n (achiever), #g (guild)
+        PvP: #f (your faction), #e (enemy faction), #b (battleground)
+        Helper pane in add/edit dialogs shows all available placeholders.
+        Legacy $player placeholder still supported for compatibility.
 1.7.2 - Fixed slash command...again
 1.7.0 - Updated TOC to The War Within.
         Fixed addon not displaying in the menu.
