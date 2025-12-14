@@ -121,29 +121,86 @@ function SetConfigurationWindow()
 	Gratwurst.ui.panel = luaFrame
 	Gratwurst.ui.panel.name = "Gratwurst";
 
+	-- Top controls container (keeps checkbox + sliders aligned)
+	local behaviorContainer = CreateFrame("Frame", nil, Gratwurst.ui.panel)
+	behaviorContainer:SetPoint("TOPLEFT", Gratwurst.ui.panel, "TOPLEFT", UI.PAD_X, -70)
+	behaviorContainer:SetPoint("TOPRIGHT", Gratwurst.ui.panel, "TOPRIGHT", -UI.PAD_X, -70)
+	behaviorContainer:SetHeight(22)
+
 	-- Make a checkbox to disable randomizing the message
 	local checkbox = CreateFrame("CheckButton", "GratwurstCheckbox", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate")
-	checkbox:SetPoint("TOPLEFT", UI.PAD_X, -60)
+	checkbox:SetPoint("LEFT", behaviorContainer, "LEFT", 0, 0)
 	checkbox:SetChecked(GratwurstShouldRandomize)
 	checkbox:SetScript("OnClick", function(self,event,arg1)
 		GratwurstShouldRandomize = self:GetChecked()
 	end)
 
+	local randomizeHelpText = "When enabled, Gratwurst picks a random message from your list.\n\nWhen disabled, it always uses the first message (#1) in the list."
+	local function ShowTooltip(owner, text)
+		GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+		GameTooltip:SetText(text, 1, 1, 1, 1, true)
+		GameTooltip:Show()
+	end
+	local function AttachTooltip(frame, text)
+		if not frame then
+			return
+		end
+		if frame.HookScript then
+			frame:HookScript("OnEnter", function(self)
+				ShowTooltip(self, text)
+			end)
+			frame:HookScript("OnLeave", function()
+				GameTooltip:Hide()
+			end)
+		else
+			frame:SetScript("OnEnter", function(self)
+				ShowTooltip(self, text)
+			end)
+			frame:SetScript("OnLeave", function()
+				GameTooltip:Hide()
+			end)
+		end
+	end
+	local function ShowRandomizeTooltip(owner)
+		ShowTooltip(owner, randomizeHelpText)
+	end
+	checkbox:SetScript("OnEnter", function(self)
+		ShowRandomizeTooltip(self)
+	end)
+	checkbox:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+
 	-- Make a label for the checkbox
 	local checkboxLabel = checkbox:CreateFontString("GratwurstCheckboxLabel")
-	checkboxLabel:SetPoint("LEFT", checkbox, "RIGHT", 8, 0)
+	checkboxLabel:SetPoint("LEFT", checkbox, "RIGHT", 8, -1)
 	checkboxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	checkboxLabel:SetWidth(250)
+	checkboxLabel:SetWidth(300)
 	checkboxLabel:SetHeight(20)
 	checkboxLabel:SetTextColor(1, 1, 1)
 	checkboxLabel:SetShadowOffset(1, -1)
 	checkboxLabel:SetShadowColor(0, 0, 0)
 	checkboxLabel:SetText("Random message selection")
 
+	local checkboxLabelHitbox = CreateFrame("Frame", nil, Gratwurst.ui.panel)
+	checkboxLabelHitbox:SetPoint("TOPLEFT", checkboxLabel, "TOPLEFT", 0, 4)
+	checkboxLabelHitbox:SetPoint("BOTTOMRIGHT", checkboxLabel, "BOTTOMRIGHT", 0, -4)
+	checkboxLabelHitbox:EnableMouse(true)
+	checkboxLabelHitbox:SetScript("OnEnter", function(self)
+		ShowRandomizeTooltip(self)
+	end)
+	checkboxLabelHitbox:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+	checkboxLabelHitbox:SetScript("OnMouseUp", function()
+		checkbox:Click()
+	end)
+
 	-- Create a container for sliders
 	local slidersContainer = CreateFrame("Frame", nil, Gratwurst.ui.panel)
-	slidersContainer:SetPoint("TOPLEFT", UI.PAD_X, -92)
-	slidersContainer:SetSize(UI.LIST_WIDTH, 80)
+	slidersContainer:SetPoint("TOPLEFT", behaviorContainer, "BOTTOMLEFT", 0, -18)
+	slidersContainer:SetPoint("TOPRIGHT", behaviorContainer, "BOTTOMRIGHT", 0, -18)
+	slidersContainer:SetHeight(80)
 
 	-- Max delay label
 	local maxDelaySliderLabel = slidersContainer:CreateFontString("MaxDelaySliderLabel")
@@ -156,6 +213,13 @@ function SetConfigurationWindow()
 	maxDelaySliderLabel:SetShadowColor(0, 0, 0)
 	maxDelaySliderLabel:SetText("Max Delay (seconds)")
 
+	local maxDelayHelpText = "How long Gratwurst may wait before sending a message.\n\nFor each eligible achievement, it waits a random time from 1 to this value (seconds)."
+	local maxDelayLabelHitbox = CreateFrame("Frame", nil, slidersContainer)
+	maxDelayLabelHitbox:SetPoint("TOPLEFT", maxDelaySliderLabel, "TOPLEFT", 0, 4)
+	maxDelayLabelHitbox:SetPoint("BOTTOMRIGHT", maxDelaySliderLabel, "BOTTOMRIGHT", 0, -4)
+	maxDelayLabelHitbox:EnableMouse(true)
+	AttachTooltip(maxDelayLabelHitbox, maxDelayHelpText)
+
 	-- Create the max delay slider
 	local maxDelaySlider = CreateFrame("Slider", "MaxDelaySlider", slidersContainer, "OptionsSliderTemplate")
 	maxDelaySlider:SetPoint("TOPLEFT", 0, -20)
@@ -167,6 +231,7 @@ function SetConfigurationWindow()
 	maxDelaySlider:SetValue(GratwurstRandomDelayMax)
 	maxDelaySlider:SetValueStep(1)
 	maxDelaySlider:SetObeyStepOnDrag(true)
+	AttachTooltip(maxDelaySlider, maxDelayHelpText)
 	
 	-- Hide default Low/High labels
 	_G[maxDelaySlider:GetName().."Low"]:Hide()
@@ -204,6 +269,13 @@ function SetConfigurationWindow()
 	MaxFrequencySliderLabel:SetShadowOffset(1, -1)
 	MaxFrequencySliderLabel:SetShadowColor(0, 0, 0)
 	MaxFrequencySliderLabel:SetText("Frequency (%)")
+
+	local frequencyHelpText = "Chance to send a grats message when a guild achievement happens.\n\nExample: 80% means ~8 out of 10 achievements get a message."
+	local frequencyLabelHitbox = CreateFrame("Frame", nil, slidersContainer)
+	frequencyLabelHitbox:SetPoint("TOPLEFT", MaxFrequencySliderLabel, "TOPLEFT", 0, 4)
+	frequencyLabelHitbox:SetPoint("BOTTOMRIGHT", MaxFrequencySliderLabel, "BOTTOMRIGHT", 0, -4)
+	frequencyLabelHitbox:EnableMouse(true)
+	AttachTooltip(frequencyLabelHitbox, frequencyHelpText)
 	
 	-- Create the Frequency slider
 	local MaxFrequencySlider = CreateFrame("Slider", "MaxFrequencySlider", slidersContainer, "OptionsSliderTemplate")
@@ -216,6 +288,7 @@ function SetConfigurationWindow()
 	MaxFrequencySlider:SetValue(GratwurstVariancePercentage)
 	MaxFrequencySlider:SetValueStep(1)
 	MaxFrequencySlider:SetObeyStepOnDrag(true)
+	AttachTooltip(MaxFrequencySlider, frequencyHelpText)
 	
 	-- Hide default Low/High labels
 	_G[MaxFrequencySlider:GetName().."Low"]:Hide()
@@ -246,7 +319,7 @@ function SetConfigurationWindow()
 	-- Create the backdrop for the message list
 	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
 	backdropFrame:SetPoint("TOPLEFT", UI.PAD_X, -188)
-	backdropFrame:SetSize(UI.LIST_WIDTH, UI.LIST_HEIGHT)
+	backdropFrame:SetPoint("BOTTOMRIGHT", Gratwurst.ui.panel, "BOTTOMRIGHT", -UI.PAD_X, 18)
 	backdropFrame:SetBackdrop( {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
 		edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
@@ -304,8 +377,22 @@ function SetConfigurationWindow()
 	
 	-- Create the content frame for the scroll frame
 	local contentFrame = CreateFrame("Frame", "GratwurstMessageContentFrame", scrollFrame)
-	contentFrame:SetSize(UI.LIST_WIDTH - 70, 100) -- width adjusted by anchors at runtime; height updated dynamically
+	contentFrame:SetSize(400, 100) -- width updated after layout; height updated dynamically
 	scrollFrame:SetScrollChild(contentFrame)
+
+	local function UpdateContentWidth()
+		local w = scrollFrame:GetWidth()
+		if not w or w <= 0 then
+			return
+		end
+		-- Leave room so rows don't sit under the scrollbar
+		local padded = math.max(1, w - 22)
+		contentFrame:SetWidth(padded)
+	end
+
+	scrollFrame:HookScript("OnShow", UpdateContentWidth)
+	scrollFrame:HookScript("OnSizeChanged", UpdateContentWidth)
+	UpdateContentWidth()
 	
 	-- Store references for later use
 	Gratwurst.ui.scrollFrame = scrollFrame
@@ -320,6 +407,7 @@ function SetConfigurationWindow()
 	addButton:SetScript("OnClick", function()
 		ShowAddMessageDialog()
 	end)
+	AttachTooltip(addButton, "Add a new message to your list.")
 	
 	-- Restore Defaults button
 	local restoreButton = CreateFrame("Button", "GratwurstRestoreButton", backdropFrame, "UIPanelButtonTemplate")
@@ -343,6 +431,7 @@ function SetConfigurationWindow()
 		}
 		StaticPopup_Show("GRATWURST_RESTORE_CONFIRM")
 	end)
+	AttachTooltip(restoreButton, "Replace your message list with the built-in defaults.\n\nThis cannot be undone.")
 	
 	category = Settings.RegisterCanvasLayoutCategory(Gratwurst.ui.panel, "Gratwurst")
 	Settings.RegisterAddOnCategory(category)
@@ -762,6 +851,11 @@ function RefreshMessageList()
 		else
 			background:SetColorTexture(0.1, 0.1, 0.1, 0.8)
 		end
+
+		local hover = messageFrame:CreateTexture(nil, "HIGHLIGHT")
+		hover:SetAllPoints()
+		hover:SetColorTexture(1, 1, 1, 0.06)
+		hover:Hide()
 		
 		-- Message number
 		local numberText = messageFrame:CreateFontString("GratwurstMessageNumber" .. i)
@@ -835,6 +929,20 @@ function RefreshMessageList()
 		sep:SetPoint("BOTTOMRIGHT", deleteButton, "BOTTOMLEFT", -6, 4)
 		sep:SetWidth(1)
 		sep:SetColorTexture(1, 1, 1, 0.08)
+
+		messageFrame:EnableMouse(true)
+		messageFrame:SetScript("OnEnter", function()
+			hover:Show()
+			if type(message) == "string" and message:match("%S") then
+				GameTooltip:SetOwner(messageFrame, "ANCHOR_RIGHT")
+				GameTooltip:SetText(message, 1, 1, 1, 1, true)
+				GameTooltip:Show()
+			end
+		end)
+		messageFrame:SetScript("OnLeave", function()
+			hover:Hide()
+			GameTooltip:Hide()
+		end)
 		
 		table.insert(Gratwurst.ui.messageFrames, messageFrame)
 		totalHeight = totalHeight + frameHeight + spacing
