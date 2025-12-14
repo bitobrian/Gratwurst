@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "PowerShell: Launch Script",
+            "name": "PowerShell: Deploy Addon",
             "type": "PowerShell",
             "request": "launch",
-            "script": "${workspaceFolder}/backupAndCopyAddon.ps1",
+            "script": "${workspaceFolder}/dev.ps1",
             "cwd": "${workspaceFolder}"
         }
     ]

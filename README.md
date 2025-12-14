@@ -14,9 +14,13 @@ A delicious automatic congratulations messaging addon for World of Warcraft.
 
 ## Usage
 
-Make changes and dump into Interface/Addons/Gratwurst.
+Make changes and deploy to your WoW installation.
 
-On VS Code, you can use the vscode launch.json with the powershell copy script to quickly back-up and copy the addon using F5.
+### Quick Deploy
+
+Run `.\dev.ps1` to automatically detect your WoW installation and copy the addon. Or use `.\dev.ps1 scan` to list all detected WoW installations if you have multiple.
+
+On VS Code, you can use the launch.json with `dev.ps1` to quickly back-up and copy the addon using F5.
 
 ### Message Management
 

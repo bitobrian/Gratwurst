@@ -28,10 +28,16 @@ function InitializeSavedVariables(self)
 	GratwurstMessage = GratwurstMessage or ""
 	GratwurstDelayInSeconds = GratwurstDelayInSeconds or 3
 	GratwurstRandomDelayMax = GratwurstRandomDelayMax or GratwurstDelayInSeconds
-	GratwurstEnabled = GratwurstEnabled or true
+	if GratwurstEnabled == nil then
+		GratwurstEnabled = true
+	end
 	GratwurstVariancePercentage = GratwurstVariancePercentage or 50
-	GratwurstIsGratzing = GratwurstIsGratzing or false
-	GratwurstShouldRandomize = GratwurstShouldRandomize or true
+	if GratwurstIsGratzing == nil then
+		GratwurstIsGratzing = false
+	end
+	if GratwurstShouldRandomize == nil then
+		GratwurstShouldRandomize = true
+	end
 	
 	-- Initialize new message array structure
 	GratwurstMessages = GratwurstMessages or {}
@@ -57,6 +63,20 @@ function InitializeSavedVariables(self)
 			"Gratz on the progress %c!"
 		}
 	end
+end
+
+local function HasAnyNonEmptyMessage()
+	if type(GratwurstMessages) ~= "table" then
+		return false
+	end
+
+	for _, message in ipairs(GratwurstMessages) do
+		if type(message) == "string" and message:match("%S") then
+			return true
+		end
+	end
+
+	return false
 end
 
 function SetConfigurationWindow()
@@ -321,18 +341,18 @@ function GuildAchievementMessageEventReceived(isDebug, author)
 	end
 	GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
     C_Timer.After(GratwurstDelayInSeconds,function()
-        if canGrats and GratwurstEnabled and GratwurstMessage ~= "" then
+		if canGrats and GratwurstEnabled and HasAnyNonEmptyMessage() then
 			if GratwurstShouldRandomize then
-				if isDebug then
-					print("GetTopMessageFromList(author): " .. GetTopMessageFromList(author))
-				else
-					SendChatMessage(GetTopMessageFromList(author), "GUILD")
-				end
-			else
 				if isDebug then
 					print("GetRandomMessageFromList(author): " .. GetRandomMessageFromList(author))
 				else
 					SendChatMessage(GetRandomMessageFromList(author), "GUILD")
+				end
+			else
+				if isDebug then
+					print("GetTopMessageFromList(author): " .. GetTopMessageFromList(author))
+				else
+					SendChatMessage(GetTopMessageFromList(author), "GUILD")
 				end
 			end
 		end
