@@ -121,204 +121,168 @@ function SetConfigurationWindow()
 	Gratwurst.ui.panel = luaFrame
 	Gratwurst.ui.panel.name = "Gratwurst";
 
-	-- Top controls container (keeps checkbox + sliders aligned)
-	local behaviorContainer = CreateFrame("Frame", nil, Gratwurst.ui.panel)
-	behaviorContainer:SetPoint("TOPLEFT", Gratwurst.ui.panel, "TOPLEFT", UI.PAD_X, -70)
-	behaviorContainer:SetPoint("TOPRIGHT", Gratwurst.ui.panel, "TOPRIGHT", -UI.PAD_X, -70)
-	behaviorContainer:SetHeight(22)
-
-	-- Make a checkbox to disable randomizing the message
-	local checkbox = CreateFrame("CheckButton", "GratwurstCheckbox", Gratwurst.ui.panel, "ChatConfigCheckButtonTemplate")
-	checkbox:SetPoint("LEFT", behaviorContainer, "LEFT", 0, 0)
-	checkbox:SetChecked(GratwurstShouldRandomize)
-	checkbox:SetScript("OnClick", function(self,event,arg1)
-		GratwurstShouldRandomize = self:GetChecked()
-	end)
-
-	local randomizeHelpText = "When enabled, Gratwurst picks a random message from your list.\n\nWhen disabled, it always uses the first message (#1) in the list."
+	-- Tooltip helpers
 	local function ShowTooltip(owner, text)
 		GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
 		GameTooltip:SetText(text, 1, 1, 1, 1, true)
 		GameTooltip:Show()
 	end
 	local function AttachTooltip(frame, text)
-		if not frame then
-			return
-		end
+		if not frame then return end
 		if frame.HookScript then
-			frame:HookScript("OnEnter", function(self)
-				ShowTooltip(self, text)
-			end)
-			frame:HookScript("OnLeave", function()
-				GameTooltip:Hide()
-			end)
+			frame:HookScript("OnEnter", function(self) ShowTooltip(self, text) end)
+			frame:HookScript("OnLeave", function() GameTooltip:Hide() end)
 		else
-			frame:SetScript("OnEnter", function(self)
-				ShowTooltip(self, text)
-			end)
-			frame:SetScript("OnLeave", function()
-				GameTooltip:Hide()
-			end)
+			frame:SetScript("OnEnter", function(self) ShowTooltip(self, text) end)
+			frame:SetScript("OnLeave", function() GameTooltip:Hide() end)
 		end
 	end
-	local function ShowRandomizeTooltip(owner)
-		ShowTooltip(owner, randomizeHelpText)
-	end
-	checkbox:SetScript("OnEnter", function(self)
-		ShowRandomizeTooltip(self)
-	end)
-	checkbox:SetScript("OnLeave", function()
-		GameTooltip:Hide()
-	end)
 
-	-- Make a label for the checkbox
+	-- Left-hand controls stack: checkbox → Max Delay slider → Frequency slider
+	local controlsLeft = CreateFrame("Frame", nil, Gratwurst.ui.panel)
+	controlsLeft:SetPoint("TOPLEFT", Gratwurst.ui.panel, "TOPLEFT", UI.PAD_X, -70)
+	controlsLeft:SetWidth(UI.SLIDER_WIDTH)
+	controlsLeft:SetHeight(160)
+
+	-- Checkbox row
+	local randomizeHelpText = "When enabled, Gratwurst picks a random message from your list.\n\nWhen disabled, it always uses the first message (#1) in the list."
+	local checkbox = CreateFrame("CheckButton", "GratwurstCheckbox", controlsLeft, "ChatConfigCheckButtonTemplate")
+	checkbox:SetPoint("TOPLEFT", controlsLeft, "TOPLEFT", 0, 0)
+	checkbox:SetChecked(GratwurstShouldRandomize)
+	checkbox:SetScript("OnClick", function(self) GratwurstShouldRandomize = self:GetChecked() end)
+	checkbox:SetScript("OnEnter", function(self) ShowTooltip(self, randomizeHelpText) end)
+	checkbox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
 	local checkboxLabel = checkbox:CreateFontString("GratwurstCheckboxLabel")
-	checkboxLabel:SetPoint("LEFT", checkbox, "RIGHT", 8, -1)
+	checkboxLabel:SetPoint("LEFT", checkbox, "RIGHT", 4, -1)
 	checkboxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
-	checkboxLabel:SetWidth(300)
+	checkboxLabel:SetWidth(UI.SLIDER_WIDTH - 30)
 	checkboxLabel:SetHeight(20)
 	checkboxLabel:SetTextColor(1, 1, 1)
 	checkboxLabel:SetShadowOffset(1, -1)
 	checkboxLabel:SetShadowColor(0, 0, 0)
+	checkboxLabel:SetJustifyH("LEFT")
 	checkboxLabel:SetText("Random message selection")
 
-	local checkboxLabelHitbox = CreateFrame("Frame", nil, Gratwurst.ui.panel)
+	local checkboxLabelHitbox = CreateFrame("Frame", nil, controlsLeft)
 	checkboxLabelHitbox:SetPoint("TOPLEFT", checkboxLabel, "TOPLEFT", 0, 4)
 	checkboxLabelHitbox:SetPoint("BOTTOMRIGHT", checkboxLabel, "BOTTOMRIGHT", 0, -4)
 	checkboxLabelHitbox:EnableMouse(true)
-	checkboxLabelHitbox:SetScript("OnEnter", function(self)
-		ShowRandomizeTooltip(self)
-	end)
-	checkboxLabelHitbox:SetScript("OnLeave", function()
-		GameTooltip:Hide()
-	end)
-	checkboxLabelHitbox:SetScript("OnMouseUp", function()
-		checkbox:Click()
-	end)
+	checkboxLabelHitbox:SetScript("OnEnter", function(self) ShowTooltip(self, randomizeHelpText) end)
+	checkboxLabelHitbox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+	checkboxLabelHitbox:SetScript("OnMouseUp", function() checkbox:Click() end)
 
-	-- Create a container for sliders
-	local slidersContainer = CreateFrame("Frame", nil, Gratwurst.ui.panel)
-	slidersContainer:SetPoint("TOPLEFT", behaviorContainer, "BOTTOMLEFT", 0, -18)
-	slidersContainer:SetPoint("TOPRIGHT", behaviorContainer, "BOTTOMRIGHT", 0, -18)
-	slidersContainer:SetHeight(80)
+	-- Max Delay slider (below checkbox)
+	local maxDelayHelpText = "How long Gratwurst may wait before sending a message.\n\nFor each eligible achievement, it waits a random time from 1 to this value (seconds)."
 
-	-- Max delay label
-	local maxDelaySliderLabel = slidersContainer:CreateFontString("MaxDelaySliderLabel")
-	maxDelaySliderLabel:SetPoint("TOPLEFT", 0, 0)
+	local maxDelaySliderLabel = controlsLeft:CreateFontString("MaxDelaySliderLabel")
+	maxDelaySliderLabel:SetPoint("TOPLEFT", controlsLeft, "TOPLEFT", 0, -36)
 	maxDelaySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 11)
-	maxDelaySliderLabel:SetWidth(200)
+	maxDelaySliderLabel:SetWidth(UI.SLIDER_WIDTH)
 	maxDelaySliderLabel:SetHeight(20)
 	maxDelaySliderLabel:SetTextColor(1, 1, 1)
 	maxDelaySliderLabel:SetShadowOffset(1, -1)
 	maxDelaySliderLabel:SetShadowColor(0, 0, 0)
+	maxDelaySliderLabel:SetJustifyH("LEFT")
 	maxDelaySliderLabel:SetText("Max Delay (seconds)")
 
-	local maxDelayHelpText = "How long Gratwurst may wait before sending a message.\n\nFor each eligible achievement, it waits a random time from 1 to this value (seconds)."
-	local maxDelayLabelHitbox = CreateFrame("Frame", nil, slidersContainer)
+	local maxDelayLabelHitbox = CreateFrame("Frame", nil, controlsLeft)
 	maxDelayLabelHitbox:SetPoint("TOPLEFT", maxDelaySliderLabel, "TOPLEFT", 0, 4)
 	maxDelayLabelHitbox:SetPoint("BOTTOMRIGHT", maxDelaySliderLabel, "BOTTOMRIGHT", 0, -4)
 	maxDelayLabelHitbox:EnableMouse(true)
 	AttachTooltip(maxDelayLabelHitbox, maxDelayHelpText)
 
-	-- Create the max delay slider
-	local maxDelaySlider = CreateFrame("Slider", "MaxDelaySlider", slidersContainer, "OptionsSliderTemplate")
-	maxDelaySlider:SetPoint("TOPLEFT", 0, -20)
+	local maxDelaySlider = CreateFrame("Slider", "MaxDelaySlider", controlsLeft, "OptionsSliderTemplate")
+	maxDelaySlider:SetPoint("TOPLEFT", controlsLeft, "TOPLEFT", 0, -54)
 	maxDelaySlider:SetWidth(UI.SLIDER_WIDTH)
 	maxDelaySlider:SetHeight(UI.SLIDER_HEIGHT)
 	maxDelaySlider:SetOrientation("HORIZONTAL")
 	maxDelaySlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
-	maxDelaySlider:SetMinMaxValues(1,9)
+	maxDelaySlider:SetMinMaxValues(1, 9)
 	maxDelaySlider:SetValue(GratwurstRandomDelayMax)
 	maxDelaySlider:SetValueStep(1)
 	maxDelaySlider:SetObeyStepOnDrag(true)
 	AttachTooltip(maxDelaySlider, maxDelayHelpText)
-	
-	-- Hide default Low/High labels
 	_G[maxDelaySlider:GetName().."Low"]:Hide()
 	_G[maxDelaySlider:GetName().."High"]:Hide()
-	
-	-- Max delay min/max labels
-	local maxDelayMinLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	maxDelayMinLabel:SetPoint("BOTTOMLEFT", maxDelaySlider, "BOTTOMLEFT", 0, -8)
+
+	local maxDelayMinLabel = controlsLeft:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	maxDelayMinLabel:SetPoint("TOPLEFT", maxDelaySlider, "BOTTOMLEFT", 0, -4)
 	maxDelayMinLabel:SetText("1")
 	maxDelayMinLabel:SetTextColor(0.7, 0.7, 0.7)
-	
-	local maxDelayMaxLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	maxDelayMaxLabel:SetPoint("BOTTOMRIGHT", maxDelaySlider, "BOTTOMRIGHT", 0, -8)
+
+	local maxDelayMaxLabel = controlsLeft:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	maxDelayMaxLabel:SetPoint("TOPRIGHT", maxDelaySlider, "BOTTOMRIGHT", 0, -4)
 	maxDelayMaxLabel:SetText("9")
 	maxDelayMaxLabel:SetTextColor(0.7, 0.7, 0.7)
-	
-	-- Max delay current value
-	local maxDelayValueLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	maxDelayValueLabel:SetPoint("BOTTOM", maxDelaySlider, "BOTTOM", 0, -20)
+
+	local maxDelayValueLabel = controlsLeft:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	maxDelayValueLabel:SetPoint("TOP", maxDelaySlider, "BOTTOM", 0, -16)
 	maxDelayValueLabel:SetText(GratwurstRandomDelayMax)
 	maxDelayValueLabel:SetTextColor(1, 0.82, 0)
-	
-	maxDelaySlider:SetScript("OnValueChanged", function(self,event,arg1)
+
+	maxDelaySlider:SetScript("OnValueChanged", function(self)
 		GratwurstRandomDelayMax = self:GetValue()
 		maxDelayValueLabel:SetText(GratwurstRandomDelayMax)
 	end)
 
-	-- Frequency label
-	local MaxFrequencySliderLabel = slidersContainer:CreateFontString("MaxFrequencySliderLabel")
-	MaxFrequencySliderLabel:SetPoint("TOPRIGHT", slidersContainer, "TOPRIGHT", 0, 0)
+	-- Frequency slider (below Max Delay)
+	local frequencyHelpText = "Chance to send a grats message when a guild achievement happens.\n\nExample: 80% means ~8 out of 10 achievements get a message."
+
+	local MaxFrequencySliderLabel = controlsLeft:CreateFontString("MaxFrequencySliderLabel")
+	MaxFrequencySliderLabel:SetPoint("TOPLEFT", controlsLeft, "TOPLEFT", 0, -100)
 	MaxFrequencySliderLabel:SetFont("Fonts\\FRIZQT__.TTF", 11)
 	MaxFrequencySliderLabel:SetWidth(UI.SLIDER_WIDTH)
 	MaxFrequencySliderLabel:SetHeight(20)
 	MaxFrequencySliderLabel:SetTextColor(1, 1, 1)
 	MaxFrequencySliderLabel:SetShadowOffset(1, -1)
 	MaxFrequencySliderLabel:SetShadowColor(0, 0, 0)
+	MaxFrequencySliderLabel:SetJustifyH("LEFT")
 	MaxFrequencySliderLabel:SetText("Frequency (%)")
 
-	local frequencyHelpText = "Chance to send a grats message when a guild achievement happens.\n\nExample: 80% means ~8 out of 10 achievements get a message."
-	local frequencyLabelHitbox = CreateFrame("Frame", nil, slidersContainer)
+	local frequencyLabelHitbox = CreateFrame("Frame", nil, controlsLeft)
 	frequencyLabelHitbox:SetPoint("TOPLEFT", MaxFrequencySliderLabel, "TOPLEFT", 0, 4)
 	frequencyLabelHitbox:SetPoint("BOTTOMRIGHT", MaxFrequencySliderLabel, "BOTTOMRIGHT", 0, -4)
 	frequencyLabelHitbox:EnableMouse(true)
 	AttachTooltip(frequencyLabelHitbox, frequencyHelpText)
-	
-	-- Create the Frequency slider
-	local MaxFrequencySlider = CreateFrame("Slider", "MaxFrequencySlider", slidersContainer, "OptionsSliderTemplate")
-	MaxFrequencySlider:SetPoint("TOPRIGHT", slidersContainer, "TOPRIGHT", 0, -20)
+
+	local MaxFrequencySlider = CreateFrame("Slider", "MaxFrequencySlider", controlsLeft, "OptionsSliderTemplate")
+	MaxFrequencySlider:SetPoint("TOPLEFT", controlsLeft, "TOPLEFT", 0, -118)
 	MaxFrequencySlider:SetWidth(UI.SLIDER_WIDTH)
 	MaxFrequencySlider:SetHeight(UI.SLIDER_HEIGHT)
 	MaxFrequencySlider:SetOrientation("HORIZONTAL")
 	MaxFrequencySlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
-	MaxFrequencySlider:SetMinMaxValues(0,100)
+	MaxFrequencySlider:SetMinMaxValues(0, 100)
 	MaxFrequencySlider:SetValue(GratwurstVariancePercentage)
 	MaxFrequencySlider:SetValueStep(1)
 	MaxFrequencySlider:SetObeyStepOnDrag(true)
 	AttachTooltip(MaxFrequencySlider, frequencyHelpText)
-	
-	-- Hide default Low/High labels
 	_G[MaxFrequencySlider:GetName().."Low"]:Hide()
 	_G[MaxFrequencySlider:GetName().."High"]:Hide()
-	
-	-- Frequency min/max labels
-	local frequencyMinLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	frequencyMinLabel:SetPoint("BOTTOMLEFT", MaxFrequencySlider, "BOTTOMLEFT", 0, -8)
+
+	local frequencyMinLabel = controlsLeft:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	frequencyMinLabel:SetPoint("TOPLEFT", MaxFrequencySlider, "BOTTOMLEFT", 0, -4)
 	frequencyMinLabel:SetText("0%")
 	frequencyMinLabel:SetTextColor(0.7, 0.7, 0.7)
-	
-	local frequencyMaxLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	frequencyMaxLabel:SetPoint("BOTTOMRIGHT", MaxFrequencySlider, "BOTTOMRIGHT", 0, -8)
+
+	local frequencyMaxLabel = controlsLeft:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	frequencyMaxLabel:SetPoint("TOPRIGHT", MaxFrequencySlider, "BOTTOMRIGHT", 0, -4)
 	frequencyMaxLabel:SetText("100%")
 	frequencyMaxLabel:SetTextColor(0.7, 0.7, 0.7)
-	
-	-- Frequency current value
-	local frequencyValueLabel = slidersContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	frequencyValueLabel:SetPoint("BOTTOM", MaxFrequencySlider, "BOTTOM", 0, -20)
+
+	local frequencyValueLabel = controlsLeft:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	frequencyValueLabel:SetPoint("TOP", MaxFrequencySlider, "BOTTOM", 0, -16)
 	frequencyValueLabel:SetText(GratwurstVariancePercentage .. "%")
 	frequencyValueLabel:SetTextColor(1, 0.82, 0)
-	
-	MaxFrequencySlider:SetScript("OnValueChanged", function(self,event,arg1)
+
+	MaxFrequencySlider:SetScript("OnValueChanged", function(self)
 		GratwurstVariancePercentage = self:GetValue()
 		frequencyValueLabel:SetText(GratwurstVariancePercentage .. "%")
 	end)
 
 	-- Create the backdrop for the message list
 	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
-	backdropFrame:SetPoint("TOPLEFT", UI.PAD_X, -188)
+	backdropFrame:SetPoint("TOPLEFT", UI.PAD_X, -240)
 	backdropFrame:SetPoint("BOTTOMRIGHT", Gratwurst.ui.panel, "BOTTOMRIGHT", -UI.PAD_X, 18)
 	backdropFrame:SetBackdrop( {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
