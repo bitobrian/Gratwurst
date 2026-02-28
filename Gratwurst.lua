@@ -457,6 +457,7 @@ function OnEventReceived(self, event, msg, author, ...)
 end
 
 function GuildAchievementMessageEventReceived(isDebug, author)
+	-- Prevent spam: ignore additional achievements while a gratz is already pending or in-flight
 	if GratwurstIsGratzing then
 		return
 	end
@@ -470,18 +471,18 @@ function GuildAchievementMessageEventReceived(isDebug, author)
 	end
 	GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
     C_Timer.After(GratwurstDelayInSeconds,function()
-		if canGrats and GratwurstEnabled and HasAnyNonEmptyMessage() then
+		if canGrats and not InCombatLockdown() and GratwurstEnabled and HasAnyNonEmptyMessage() then
 			if GratwurstShouldRandomize then
 				if isDebug then
 					print("GetRandomMessageFromList(author): " .. GetRandomMessageFromList(author))
 				else
-					SendChatMessage(GetRandomMessageFromList(author), "GUILD")
+					C_ChatInfo.SendChatMessage(GetRandomMessageFromList(author), "GUILD")
 				end
 			else
 				if isDebug then
 					print("GetTopMessageFromList(author): " .. GetTopMessageFromList(author))
 				else
-					SendChatMessage(GetTopMessageFromList(author), "GUILD")
+					C_ChatInfo.SendChatMessage(GetTopMessageFromList(author), "GUILD")
 				end
 			end
 		end
