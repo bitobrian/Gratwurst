@@ -457,6 +457,7 @@ function OnEventReceived(self, event, msg, author, ...)
 end
 
 function GuildAchievementMessageEventReceived(isDebug, author)
+	-- Prevent spam: ignore additional achievements while a gratz is already pending or in-flight
 	if GratwurstIsGratzing then
 		return
 	end
