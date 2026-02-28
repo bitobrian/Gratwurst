@@ -465,7 +465,7 @@ function GuildAchievementMessageEventReceived(isDebug, author)
 
 	local canGrats = false
 	local random = math.random(1, 100)
-	if random <= GratwurstVariancePercentage then
+	if random <= GratwurstVariancePercentage and not InCombatLockdown() then
 		canGrats = true
 	end
 	GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
