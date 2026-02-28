@@ -1,6 +1,6 @@
 ---@diagnostic disable: param-type-mismatch, missing-parameter, undefined-field
 -- create global variables
-ConfigTitle = "Gratwurst 1.8.0 Config"
+ConfigTitle = "Gratwurst @project-version@ Config"
 PaddingLeft = 20
 local category
 

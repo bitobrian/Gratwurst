@@ -298,6 +298,41 @@ function Remove-ExistingAddon {
     }
 }
 
+function Resolve-ProjectVersion {
+    return "0.0.0.0"
+}
+
+function Set-VersionTokens {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$InstallPath,
+        [Parameter(Mandatory=$true)]
+        [string]$ProjectVersion
+    )
+
+    $tokenizedExtensions = @(".toc", ".lua")
+    $token = "@project-version@"
+    $replaced = 0
+
+    Get-ChildItem -Path $InstallPath -Recurse -File |
+        Where-Object { $tokenizedExtensions -contains $_.Extension.ToLowerInvariant() } |
+        ForEach-Object {
+            $content = Get-Content -Path $_.FullName -Raw
+            if ($content -match [regex]::Escape($token)) {
+                $content = $content -replace [regex]::Escape($token), $ProjectVersion
+                Set-Content -Path $_.FullName -Value $content -NoNewline
+                Write-Status "Substituted version in: $($_.Name)" $colors.Info
+                $replaced++
+            }
+        }
+
+    if ($replaced -gt 0) {
+        Write-Status "Version token replaced with '$ProjectVersion' in $replaced file(s)" $colors.Success
+    } else {
+        Write-Status "No version tokens found (already clean)" $colors.Warning
+    }
+}
+
 function Copy-AddonFiles {
     try {
         # Create addon directory
@@ -462,6 +497,10 @@ try {
             
             # Copy new addon
             Copy-AddonFiles
+
+            # Replace @project-version@ tokens in the installed files
+            $projectVersion = Resolve-ProjectVersion
+            Set-VersionTokens -InstallPath $addonPath -ProjectVersion $projectVersion
             
             Write-Status "=== Copy process completed successfully! ===" $colors.Success
         }
