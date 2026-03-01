@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.9.0] - 2026-03-01
+
+### Fixed
+- Grats messages no longer send if combat begins during the delay window after an achievement fires
+- Replaced deprecated `SendChatMessage` with `C_ChatInfo.SendChatMessage`
+
+### Changed
+- Config panel controls (checkbox, Max Delay slider, Frequency slider) are now in a left-aligned vertical stack for a cleaner layout
+
+### Internal
+- Version number is now injected at package time via `@project-version@` token; source files no longer contain a hardcoded version
+- Added `package.sh` and `package.ps1` for local and CI packaging
+- CI workflow now triggers automatically on version tag push and validates semver format on manual runs
+- Action dependencies pinned to exact commit SHAs
+
 ## [1.8.0] - 2025-06-25
 
 ### Added

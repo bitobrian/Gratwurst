@@ -1,3 +1,6 @@
+1.9.0 - Fixed: grats no longer send if combat starts during the delay window after an achievement fires.
+        Fixed: updated deprecated SendChatMessage to C_ChatInfo.SendChatMessage.
+        Config panel controls reorganized into a cleaner left-aligned vertical layout.
 1.8.0 - Complete UI overhaul with modern message management!
         Replaced EditBox with ScrollFrame-based message list.
         Added individual message management (add, edit, delete, reorder).
