@@ -40,7 +40,7 @@ try {
 
     # Substitute version tokens
     $token = "@project-version@"
-    foreach ($file in @("${StageDir}\${AddonName}.toc", "${StageDir}\${AddonName}.lua")) {
+    foreach ($file in @("${StageDir}\${AddonName}.toc", "${StageDir}\${AddonName}.lua", "${StageDir}\${AddonName}.xml")) {
         $content = Get-Content $file -Raw
         if ($content -match [regex]::Escape($token)) {
             $content = $content -replace [regex]::Escape($token), $Version

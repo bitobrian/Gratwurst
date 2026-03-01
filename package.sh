@@ -41,6 +41,7 @@ fi
 # Substitute version tokens
 sed -i "s|@project-version@|${VERSION}|g" "${STAGE_DIR}/${ADDON_NAME}.toc"
 sed -i "s|@project-version@|${VERSION}|g" "${STAGE_DIR}/${ADDON_NAME}.lua"
+sed -i "s|@project-version@|${VERSION}|g" "${STAGE_DIR}/${ADDON_NAME}.xml"
 
 # Zip
 rm -f "${ZIP_PATH}"
