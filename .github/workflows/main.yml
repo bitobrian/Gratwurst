@@ -28,56 +28,21 @@ jobs:
         fi
         echo "version=${version}" >> $GITHUB_OUTPUT
 
-    - name: Get name of addon
+    - name: Package addon
       id: init
       run: |
-        addon_name=$(ls *.toc)
-        addon_name=$(basename $addon_name .toc)
+        bash package.sh "${{ steps.version.outputs.version }}"
+        addon_name=$(basename *.toc .toc)
         tag_name=${addon_name}-release-v${{ steps.version.outputs.version }}
         echo "addon_name=${addon_name}" >> $GITHUB_OUTPUT
         echo "tag_name=${tag_name}" >> $GITHUB_OUTPUT
 
-    - name: Make folder for zips
-      run: |
-        mkdir -p .releases/${{ steps.init.outputs.addon_name }}
-        cp ${{ steps.init.outputs.addon_name }}.lua .releases/${{ steps.init.outputs.addon_name }}
-        cp ${{ steps.init.outputs.addon_name }}.toc .releases/${{ steps.init.outputs.addon_name }}
-        cp ${{ steps.init.outputs.addon_name }}.xml .releases/${{ steps.init.outputs.addon_name }}
-        if [ -d "media" ]; then
-          cp -R media .releases/${{ steps.init.outputs.addon_name }}/
-        fi
-
-    - name: Substitute version tokens
-      run: |
-        version="${{ steps.version.outputs.version }}"
-        dir=".releases/${{ steps.init.outputs.addon_name }}"
-        sed -i "s/@project-version@/${version}/g" "${dir}/${{ steps.init.outputs.addon_name }}.toc"
-        sed -i "s/@project-version@/${version}/g" "${dir}/${{ steps.init.outputs.addon_name }}.lua"
-
-    - name: Create retail zip
-      run: |
-        cd .releases
-        zip -9 -r ${{ steps.init.outputs.tag_name }}.zip ${{ steps.init.outputs.addon_name }}
-        cd ..
-
-    - name: Tag this version
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Tag this version and upload release
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.init.outputs.tag_name }}
-        release_name: ${{ steps.init.outputs.addon_name }} ${{ steps.version.outputs.version }}
+        name: ${{ steps.init.outputs.addon_name }} ${{ steps.version.outputs.version }}
         body: ${{ steps.init.outputs.addon_name }} ${{ steps.version.outputs.version }}
         draft: false
         prerelease: false
-
-    - name: Add retail zip to release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: .releases/${{ steps.init.outputs.tag_name }}.zip
-        asset_name: ${{ steps.init.outputs.tag_name }}.zip
-        asset_content_type: application/zip
+        files: .releases/${{ steps.init.outputs.tag_name }}.zip
