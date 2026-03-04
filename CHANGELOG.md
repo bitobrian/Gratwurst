@@ -8,6 +8,7 @@
 
 ### Fixed
 - VIP message lookup now falls back to the normal message pool if the processed message is blank
+- `GratwurstIsGratzing` lock is now always reset on login; previously a crash or disconnect while a grats was pending would permanently silence the addon until the saved variable was manually cleared
 
 ## [1.9.0] - 2026-03-01
 

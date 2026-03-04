@@ -51,9 +51,8 @@ function InitializeSavedVariables(self)
 		GratwurstEnabled = true
 	end
 	GratwurstVariancePercentage = GratwurstVariancePercentage or 50
-	if GratwurstIsGratzing == nil then
-		GratwurstIsGratzing = false
-	end
+	-- Always reset on login — this is transient state and must never carry over from a previous session
+	GratwurstIsGratzing = false
 	if GratwurstShouldRandomize == nil then
 		GratwurstShouldRandomize = true
 	end
