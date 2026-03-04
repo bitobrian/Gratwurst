@@ -396,6 +396,16 @@ function SetConfigurationWindow()
 		StaticPopup_Show("GRATWURST_RESTORE_CONFIRM")
 	end)
 	AttachTooltip(restoreButton, "Replace your message list with the built-in defaults.\n\nThis cannot be undone.")
+
+	-- Edit as Text button (centre of bottom bar)
+	local editAsTextButton = CreateFrame("Button", "GratwurstEditAsTextButton", backdropFrame, "UIPanelButtonTemplate")
+	editAsTextButton:SetSize(130, 24)
+	editAsTextButton:SetPoint("BOTTOM", backdropFrame, "BOTTOM", 0, 10)
+	editAsTextButton:SetText("Edit as Text")
+	editAsTextButton:SetScript("OnClick", function()
+		ShowBulkEditDialog()
+	end)
+	AttachTooltip(editAsTextButton, "Edit all messages as plain text.\nOne message per line — paste a whole new set at once.")
 	
 	category = Settings.RegisterCanvasLayoutCategory(Gratwurst.ui.panel, "Gratwurst")
 	Settings.RegisterAddOnCategory(category)
@@ -920,6 +930,115 @@ function RefreshMessageList()
 	if Gratwurst.ui.messageCountLabel then
 		Gratwurst.ui.messageCountLabel:SetText("Messages: " .. #GratwurstMessages)
 	end
+end
+
+function ShowBulkEditDialog()
+	-- Re-use a single instance if it already exists
+	if GratwurstBulkEditDialog then
+		-- Refresh the text with the current messages and re-show
+		local joined = table.concat(GratwurstMessages, "\n")
+		GratwurstBulkEditDialog.inputBox:SetText(joined)
+		GratwurstBulkEditDialog.inputBox:SetCursorPosition(0)
+		GratwurstBulkEditDialog:Show()
+		GratwurstBulkEditDialog.inputBox:SetFocus()
+		return
+	end
+
+	local dialog = CreateFrame("Frame", "GratwurstBulkEditDialogFrame", UIParent, "BackdropTemplate")
+	GratwurstBulkEditDialog = dialog
+	dialog:SetSize(600, 500)
+	dialog:SetPoint("CENTER")
+	dialog:SetFrameStrata("DIALOG")
+	dialog:SetFrameLevel(100)
+	dialog:SetBackdrop({
+		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+		tile = true,
+		tileSize = 16,
+		edgeSize = 32,
+		insets = { left = 8, right = 8, top = 8, bottom = 8 }
+	})
+	dialog:SetBackdropColor(0.0, 0.0, 0.0, 1.0)
+	dialog:SetMovable(true)
+	dialog:EnableMouse(true)
+	dialog:RegisterForDrag("LeftButton")
+	dialog:SetScript("OnDragStart", dialog.StartMoving)
+	dialog:SetScript("OnDragStop", dialog.StopMovingOrSizing)
+
+	-- Title
+	local title = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+	title:SetPoint("TOP", dialog, "TOP", 0, -15)
+	title:SetText("Edit Messages as Text")
+
+	-- Instructions
+	local instructions = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	instructions:SetPoint("TOPLEFT", dialog, "TOPLEFT", 25, -45)
+	instructions:SetWidth(550)
+	instructions:SetJustifyH("LEFT")
+	instructions:SetText("One message per line. Edit, paste, or replace the whole list, then click Save.")
+	instructions:SetTextColor(1, 0.82, 0)
+
+	-- Scroll frame + multiline EditBox
+	local scrollFrame = CreateFrame("ScrollFrame", "GratwurstBulkEditScroll", dialog, "UIPanelScrollFrameTemplate")
+	scrollFrame:SetPoint("TOPLEFT", dialog, "TOPLEFT", 20, -75)
+	scrollFrame:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -36, 60)
+
+	local inputBox = CreateFrame("EditBox", "GratwurstBulkEditInput", scrollFrame)
+	inputBox:SetMultiLine(true)
+	inputBox:SetAutoFocus(false)
+	inputBox:SetFontObject("ChatFontNormal")
+	inputBox:SetWidth(scrollFrame:GetWidth() or 520)
+	inputBox:SetTextColor(1, 1, 1)
+	inputBox:SetScript("OnEscapePressed", function()
+		dialog:Hide()
+	end)
+	scrollFrame:SetScrollChild(inputBox)
+	scrollFrame:HookScript("OnSizeChanged", function()
+		local w = scrollFrame:GetWidth()
+		if w and w > 0 then
+			inputBox:SetWidth(w)
+		end
+	end)
+	dialog.inputBox = inputBox
+
+	-- Populate with current messages
+	local joined = table.concat(GratwurstMessages, "\n")
+	inputBox:SetText(joined)
+	inputBox:SetCursorPosition(0)
+
+	-- Save button
+	local saveButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+	saveButton:SetSize(100, 28)
+	saveButton:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 25, 20)
+	saveButton:SetText("Save")
+	saveButton:SetScript("OnClick", function()
+		local text = inputBox:GetText()
+		local newMessages = {}
+		-- Split on newlines; skip blank lines
+		for line in text:gmatch("[^\n]+") do
+			local trimmed = line:match("^%s*(.-)%s*$")
+			if trimmed ~= "" then
+				table.insert(newMessages, trimmed)
+			end
+		end
+		if #newMessages > 0 then
+			GratwurstMessages = newMessages
+			SaveMessagesToVariables()
+			RefreshMessageList()
+		end
+		dialog:Hide()
+	end)
+
+	local cancelButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+	cancelButton:SetSize(80, 28)
+	cancelButton:SetPoint("BOTTOMLEFT", saveButton, "BOTTOMRIGHT", 10, 0)
+	cancelButton:SetText("Cancel")
+	cancelButton:SetScript("OnClick", function()
+		dialog:Hide()
+	end)
+
+	dialog:Show()
+	inputBox:SetFocus()
 end
 
 function ShowAddMessageDialog()
