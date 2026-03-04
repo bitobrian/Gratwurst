@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.10.0] - 2026-03-03
+
+### Added
+- **Special Messages**: Hidden dialog (click the title banner) lets you configure per-character special messages — when a listed character earns an achievement, one of those messages is used instead of the normal pool
+- **Edit as Text**: New "Edit as Text" button lets you bulk-edit your entire message list as plain text, one message per line — easy to paste in a whole new set at once
+
+### Fixed
+- VIP message lookup now falls back to the normal message pool if the processed message is blank
+
 ## [1.9.0] - 2026-03-01
 
 ### Fixed
