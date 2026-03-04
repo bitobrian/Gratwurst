@@ -20,6 +20,8 @@ Open the config via:
 
 The addon now features a modern listbox interface for managing your congratulatory messages:
 
+<img src="media/menuoptions.png" width="400" />
+
 - **Add Message**: Click the "Add Message" button to create new messages
 - **Edit Message**: Click "Edit" on any message to modify it
 - **Delete Message**: Click "Del" to remove unwanted messages
@@ -55,6 +57,14 @@ Legacy placeholder (still supported):
 - `$player` inserts the character name
 
 Tip: the Add/Edit dialogs show a full placeholder list and live preview.
+
+The **Edit as Text** button opens a bulk editor — great for quickly adding, reorganizing, or replacing your entire message list at once. One message per line.
+
+<img src="media/edit-text.png" width="400" />
+
+> **Pro tip:** Feed your placeholders to an AI and ask it to generate a list of messages! For example:
+> *"Generate 20 sarcastic congratulations messages for a World of Warcraft guild addon. Use these placeholders where appropriate: `%c` (character name), `%C` (class), `%g` (short guild name), `%G` (full guild name), `%r` (guild rank), `%l` (level)."*
+> Then paste the results straight into the bulk editor and hit Save.
 
 ## Development
 
