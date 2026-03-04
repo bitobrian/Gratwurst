@@ -3,6 +3,8 @@
 ConfigTitle = "Gratwurst @project-version@ Config"
 PaddingLeft = 20
 local category
+local GratwurstVIPDialog
+local GratwurstBulkEditDialog
 
 local UI = {
 	PAD_X = 20,
@@ -84,6 +86,18 @@ function InitializeSavedVariables(self)
 	-- VIP: per-character name list and their special messages
 	GratwurstVIPNames = GratwurstVIPNames or {}
 	GratwurstVIPMessages = GratwurstVIPMessages or {}
+end
+
+-- Splits a multi-line string into a trimmed, non-blank list of strings.
+local function ParseLines(text)
+	local t = {}
+	for line in text:gmatch("[^\n]+") do
+		local trimmed = line:match("^%s*(.-)%s*$")
+		if trimmed ~= "" then
+			table.insert(t, trimmed)
+		end
+	end
+	return t
 end
 
 local function HasAnyNonEmptyMessage()
@@ -506,7 +520,7 @@ function GetVIPMessageForAuthor(author)
 	-- author arrives as "Name-Realm"; compare case-insensitively against stored names
 	-- which may be bare names ("Taco") or name-realm ("Taco-Realm").
 	local authorLower = author:lower()
-	local authorName  = authorLower:gsub("%-.*", "")
+	local authorName  = authorLower:match("^([^%-]+)") or authorLower
 
 	local isVIP = false
 	for _, vipEntry in ipairs(GratwurstVIPNames) do
@@ -524,7 +538,12 @@ function GetVIPMessageForAuthor(author)
 	-- Pick a random VIP message and expand placeholders
 	local idx = math.random(1, #GratwurstVIPMessages)
 	local message = GratwurstVIPMessages[idx]
-	return FindAndReplacePlayerNameToken(message, author)
+	local result = FindAndReplacePlayerNameToken(message, author)
+	-- Guard against a blank result so the normal pool is used as fallback
+	if not result or not result:match("%S") then
+		return nil
+	end
+	return result
 end
 
 function GetTopMessageFromList(author)
@@ -1150,18 +1169,8 @@ function ShowVIPDialog()
 	saveButton:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 25, 20)
 	saveButton:SetText("Save")
 	saveButton:SetScript("OnClick", function()
-		local function parseLines(text)
-			local t = {}
-			for line in text:gmatch("[^\n]+") do
-				local trimmed = line:match("^%s*(.-)%s*$")
-				if trimmed ~= "" then
-					table.insert(t, trimmed)
-				end
-			end
-			return t
-		end
-		GratwurstVIPNames    = parseLines(namesBox:GetText())
-		GratwurstVIPMessages = parseLines(msgsBox:GetText())
+		GratwurstVIPNames    = ParseLines(namesBox:GetText())
+		GratwurstVIPMessages = ParseLines(msgsBox:GetText())
 		dialog:Hide()
 	end)
 
@@ -1266,15 +1275,7 @@ function ShowBulkEditDialog()
 	saveButton:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 25, 20)
 	saveButton:SetText("Save")
 	saveButton:SetScript("OnClick", function()
-		local text = inputBox:GetText()
-		local newMessages = {}
-		-- Split on newlines; skip blank lines
-		for line in text:gmatch("[^\n]+") do
-			local trimmed = line:match("^%s*(.-)%s*$")
-			if trimmed ~= "" then
-				table.insert(newMessages, trimmed)
-			end
-		end
+		local newMessages = ParseLines(inputBox:GetText())
 		if #newMessages > 0 then
 			GratwurstMessages = newMessages
 			SaveMessagesToVariables()
