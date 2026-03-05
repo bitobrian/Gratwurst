@@ -49,9 +49,9 @@ function InitializeSavedVariables(self)
 		GratwurstEnabled = true
 	end
 	GratwurstVariancePercentage = GratwurstVariancePercentage or 50
-	if GratwurstIsGratzing == nil then
-		GratwurstIsGratzing = false
-	end
+	-- Always reset on load: a timer cannot survive a session boundary, so a
+	-- saved true value would permanently block all sends.
+	GratwurstIsGratzing = false
 	if GratwurstShouldRandomize == nil then
 		GratwurstShouldRandomize = true
 	end
