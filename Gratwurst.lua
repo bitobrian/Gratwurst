@@ -3,6 +3,8 @@
 ConfigTitle = "Gratwurst @project-version@ Config"
 PaddingLeft = 20
 local category
+local GratwurstVIPDialog
+local GratwurstBulkEditDialog
 
 local UI = {
 	PAD_X = 20,
@@ -49,9 +51,8 @@ function InitializeSavedVariables(self)
 		GratwurstEnabled = true
 	end
 	GratwurstVariancePercentage = GratwurstVariancePercentage or 50
-	if GratwurstIsGratzing == nil then
-		GratwurstIsGratzing = false
-	end
+	-- Always reset on login — this is transient state and must never carry over from a previous session
+	GratwurstIsGratzing = false
 	if GratwurstShouldRandomize == nil then
 		GratwurstShouldRandomize = true
 	end
@@ -80,6 +81,22 @@ function InitializeSavedVariables(self)
 			"Gratz on the progress %c!"
 		}
 	end
+
+	-- VIP: per-character name list and their special messages
+	GratwurstVIPNames = GratwurstVIPNames or {}
+	GratwurstVIPMessages = GratwurstVIPMessages or {}
+end
+
+-- Splits a multi-line string into a trimmed, non-blank list of strings.
+local function ParseLines(text)
+	local t = {}
+	for line in text:gmatch("[^\n]+") do
+		local trimmed = line:match("^%s*(.-)%s*$")
+		if trimmed ~= "" then
+			table.insert(t, trimmed)
+		end
+	end
+	return t
 end
 
 local function HasAnyNonEmptyMessage()
@@ -115,6 +132,21 @@ function SetConfigurationWindow()
 	titleString:SetShadowOffset(1, -1)
 	titleString:SetShadowColor(0, 0, 0)
 	titleString:SetText(ConfigTitle)
+
+	-- Hidden clickable overlay on the title banner — opens the VIP special-messages dialog.
+	-- No label, no visible hint; the cursor just changes to the hand on hover.
+	local titleHitbox = CreateFrame("Button", nil, luaFrame)
+	titleHitbox:SetPoint("TOP", luaFrame, "TOP", 0, 5)
+	titleHitbox:SetSize(320, 50)
+	titleHitbox:SetScript("OnClick", function()
+		ShowVIPDialog()
+	end)
+	titleHitbox:SetScript("OnEnter", function()
+		titleString:SetTextColor(1, 1, 0.6)
+	end)
+	titleHitbox:SetScript("OnLeave", function()
+		titleString:SetTextColor(1, 0.8196079, 0)
+	end)
 
 	Gratwurst = {};
 	Gratwurst.ui = {};
@@ -396,6 +428,16 @@ function SetConfigurationWindow()
 		StaticPopup_Show("GRATWURST_RESTORE_CONFIRM")
 	end)
 	AttachTooltip(restoreButton, "Replace your message list with the built-in defaults.\n\nThis cannot be undone.")
+
+	-- Edit as Text button (centre of bottom bar)
+	local editAsTextButton = CreateFrame("Button", "GratwurstEditAsTextButton", backdropFrame, "UIPanelButtonTemplate")
+	editAsTextButton:SetSize(130, 24)
+	editAsTextButton:SetPoint("BOTTOM", backdropFrame, "BOTTOM", 0, 10)
+	editAsTextButton:SetText("Edit as Text")
+	editAsTextButton:SetScript("OnClick", function()
+		ShowBulkEditDialog()
+	end)
+	AttachTooltip(editAsTextButton, "Edit all messages as plain text.\nOne message per line — paste a whole new set at once.")
 	
 	category = Settings.RegisterCanvasLayoutCategory(Gratwurst.ui.panel, "Gratwurst")
 	Settings.RegisterAddOnCategory(category)
@@ -435,23 +477,72 @@ function GuildAchievementMessageEventReceived(isDebug, author)
 	end
 	GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
     C_Timer.After(GratwurstDelayInSeconds,function()
-		if canGrats and not InCombatLockdown() and GratwurstEnabled and HasAnyNonEmptyMessage() then
-			if GratwurstShouldRandomize then
+		if canGrats and not InCombatLockdown() and GratwurstEnabled then
+			-- VIP check: if the achiever is on the VIP list and VIP messages exist, use those
+			local vipMessage = GetVIPMessageForAuthor(author)
+			if vipMessage then
 				if isDebug then
-					print("GetRandomMessageFromList(author): " .. GetRandomMessageFromList(author))
+					print("VIP message: " .. vipMessage)
 				else
-					C_ChatInfo.SendChatMessage(GetRandomMessageFromList(author), "GUILD")
+					C_ChatInfo.SendChatMessage(vipMessage, "GUILD")
 				end
-			else
-				if isDebug then
-					print("GetTopMessageFromList(author): " .. GetTopMessageFromList(author))
+			elseif HasAnyNonEmptyMessage() then
+				if GratwurstShouldRandomize then
+					if isDebug then
+						print("GetRandomMessageFromList(author): " .. GetRandomMessageFromList(author))
+					else
+						C_ChatInfo.SendChatMessage(GetRandomMessageFromList(author), "GUILD")
+					end
 				else
-					C_ChatInfo.SendChatMessage(GetTopMessageFromList(author), "GUILD")
+					if isDebug then
+						print("GetTopMessageFromList(author): " .. GetTopMessageFromList(author))
+					else
+						C_ChatInfo.SendChatMessage(GetTopMessageFromList(author), "GUILD")
+					end
 				end
 			end
 		end
 		GratwurstIsGratzing = false
     end)
+end
+
+-- Returns a processed VIP message if the author is on the VIP names list and VIP messages
+-- are configured, otherwise returns nil so the normal pool is used.
+function GetVIPMessageForAuthor(author)
+	if type(GratwurstVIPNames) ~= "table" or #GratwurstVIPNames == 0 then
+		return nil
+	end
+	if type(GratwurstVIPMessages) ~= "table" or #GratwurstVIPMessages == 0 then
+		return nil
+	end
+
+	-- author arrives as "Name-Realm"; compare case-insensitively against stored names
+	-- which may be bare names ("Taco") or name-realm ("Taco-Realm").
+	local authorLower = author:lower()
+	local authorName  = authorLower:match("^([^%-]+)") or authorLower
+
+	local isVIP = false
+	for _, vipEntry in ipairs(GratwurstVIPNames) do
+		local entryLower = vipEntry:lower():match("^%s*(.-)%s*$")
+		if entryLower == authorLower or entryLower == authorName then
+			isVIP = true
+			break
+		end
+	end
+
+	if not isVIP then
+		return nil
+	end
+
+	-- Pick a random VIP message and expand placeholders
+	local idx = math.random(1, #GratwurstVIPMessages)
+	local message = GratwurstVIPMessages[idx]
+	local result = FindAndReplacePlayerNameToken(message, author)
+	-- Guard against a blank result so the normal pool is used as fallback
+	if not result or not result:match("%S") then
+		return nil
+	end
+	return result
 end
 
 function GetTopMessageFromList(author)
@@ -920,6 +1011,288 @@ function RefreshMessageList()
 	if Gratwurst.ui.messageCountLabel then
 		Gratwurst.ui.messageCountLabel:SetText("Messages: " .. #GratwurstMessages)
 	end
+end
+
+function ShowVIPDialog()
+	-- Re-use a single instance; refresh content on re-open.
+	if GratwurstVIPDialog then
+		GratwurstVIPDialog.namesBox:SetText(table.concat(GratwurstVIPNames, "\n"))
+		GratwurstVIPDialog.namesBox:SetCursorPosition(0)
+		GratwurstVIPDialog.msgsBox:SetText(table.concat(GratwurstVIPMessages, "\n"))
+		GratwurstVIPDialog.msgsBox:SetCursorPosition(0)
+		GratwurstVIPDialog:Show()
+		GratwurstVIPDialog.namesBox:SetFocus()
+		return
+	end
+
+	local dialog = CreateFrame("Frame", "GratwurstVIPDialogFrame", UIParent, "BackdropTemplate")
+	GratwurstVIPDialog = dialog
+	dialog:SetSize(660, 520)
+	dialog:SetPoint("CENTER")
+	dialog:SetFrameStrata("DIALOG")
+	dialog:SetFrameLevel(100)
+	dialog:SetBackdrop({
+		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+		tile = true,
+		tileSize = 16,
+		edgeSize = 32,
+		insets = { left = 8, right = 8, top = 8, bottom = 8 }
+	})
+	dialog:SetBackdropColor(0.05, 0.0, 0.08, 1.0)
+	dialog:SetMovable(true)
+	dialog:EnableMouse(true)
+	dialog:RegisterForDrag("LeftButton")
+	dialog:SetScript("OnDragStart", dialog.StartMoving)
+	dialog:SetScript("OnDragStop", dialog.StopMovingOrSizing)
+	dialog:SetScript("OnKeyDown", function(self, key)
+		if key == "ESCAPE" then dialog:Hide() end
+	end)
+
+	-- Title
+	local titleBorder = dialog:CreateTexture(nil, "BORDER")
+	titleBorder:SetWidth(260)
+	titleBorder:SetHeight(50)
+	titleBorder:SetPoint("TOP", dialog, "TOP", 0, 5)
+	titleBorder:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
+	titleBorder:SetTexCoord(.2, .8, 0, .6)
+
+	local titleStr = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+	titleStr:SetPoint("TOP", dialog, "TOP", 0, -15)
+	titleStr:SetText("Special Messages")
+	titleStr:SetTextColor(1, 0.82, 0)
+
+	-- Subtitle
+	local subtitle = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	subtitle:SetPoint("TOP", dialog, "TOP", 0, -40)
+	subtitle:SetText("When an achievement comes from one of these characters, use one of these messages instead.")
+	subtitle:SetTextColor(0.7, 0.7, 0.7)
+	subtitle:SetWidth(600)
+	subtitle:SetJustifyH("CENTER")
+
+	local PANE_TOP    = -65
+	local PANE_BOTTOM = 55  -- space for buttons
+	local PANE_W      = 278
+	local INNER_PAD   = 12
+
+	-- ── Left pane: character names ───────────────────────────────────────────
+
+	local leftPane = CreateFrame("Frame", nil, dialog, "BackdropTemplate")
+	leftPane:SetPoint("TOPLEFT",  dialog, "TOPLEFT",  20, PANE_TOP)
+	leftPane:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 20, PANE_BOTTOM)
+	leftPane:SetWidth(PANE_W)
+	leftPane:SetBackdrop({
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
+		tile = true, tileSize = 12, edgeSize = 8,
+		insets = { left = 5, right = 3, top = 3, bottom = 3 }
+	})
+
+	local leftLabel = leftPane:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	leftLabel:SetPoint("TOP", leftPane, "TOP", 0, -10)
+	leftLabel:SetText("Character Names")
+	leftLabel:SetTextColor(1, 0.82, 0)
+
+	local leftHint = leftPane:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	leftHint:SetPoint("TOP", leftPane, "TOP", 0, -26)
+	leftHint:SetText("One name per line")
+	leftHint:SetTextColor(0.6, 0.6, 0.6)
+
+	local leftScroll = CreateFrame("ScrollFrame", "GratwurstVIPNamesScroll", leftPane, "UIPanelScrollFrameTemplate")
+	leftScroll:SetPoint("TOPLEFT",     leftPane, "TOPLEFT",  INNER_PAD, -46)
+	leftScroll:SetPoint("BOTTOMRIGHT", leftPane, "BOTTOMRIGHT", -(INNER_PAD + 18), INNER_PAD)
+
+	local namesBox = CreateFrame("EditBox", "GratwurstVIPNamesBox", leftScroll)
+	namesBox:SetMultiLine(true)
+	namesBox:SetAutoFocus(false)
+	namesBox:SetFontObject("ChatFontNormal")
+	namesBox:SetWidth(leftScroll:GetWidth() or 220)
+	namesBox:SetTextColor(1, 1, 1)
+	namesBox:SetScript("OnEscapePressed", function() dialog:Hide() end)
+	leftScroll:SetScrollChild(namesBox)
+	leftScroll:HookScript("OnSizeChanged", function()
+		local w = leftScroll:GetWidth()
+		if w and w > 0 then namesBox:SetWidth(w) end
+	end)
+	namesBox:SetText(table.concat(GratwurstVIPNames, "\n"))
+	namesBox:SetCursorPosition(0)
+	dialog.namesBox = namesBox
+
+	-- ── Right pane: special messages ─────────────────────────────────────────
+
+	local rightPane = CreateFrame("Frame", nil, dialog, "BackdropTemplate")
+	rightPane:SetPoint("TOPRIGHT",    dialog, "TOPRIGHT",   -20, PANE_TOP)
+	rightPane:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -20, PANE_BOTTOM)
+	rightPane:SetWidth(PANE_W)
+	rightPane:SetBackdrop({
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
+		tile = true, tileSize = 12, edgeSize = 8,
+		insets = { left = 5, right = 3, top = 3, bottom = 3 }
+	})
+
+	local rightLabel = rightPane:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	rightLabel:SetPoint("TOP", rightPane, "TOP", 0, -10)
+	rightLabel:SetText("Special Messages")
+	rightLabel:SetTextColor(1, 0.82, 0)
+
+	local rightHint = rightPane:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	rightHint:SetPoint("TOP", rightPane, "TOP", 0, -26)
+	rightHint:SetText("One message per line  •  supports placeholders")
+	rightHint:SetTextColor(0.6, 0.6, 0.6)
+
+	local rightScroll = CreateFrame("ScrollFrame", "GratwurstVIPMsgsScroll", rightPane, "UIPanelScrollFrameTemplate")
+	rightScroll:SetPoint("TOPLEFT",     rightPane, "TOPLEFT",  INNER_PAD, -46)
+	rightScroll:SetPoint("BOTTOMRIGHT", rightPane, "BOTTOMRIGHT", -(INNER_PAD + 18), INNER_PAD)
+
+	local msgsBox = CreateFrame("EditBox", "GratwurstVIPMsgsBox", rightScroll)
+	msgsBox:SetMultiLine(true)
+	msgsBox:SetAutoFocus(false)
+	msgsBox:SetFontObject("ChatFontNormal")
+	msgsBox:SetWidth(rightScroll:GetWidth() or 220)
+	msgsBox:SetTextColor(1, 1, 1)
+	msgsBox:SetScript("OnEscapePressed", function() dialog:Hide() end)
+	rightScroll:SetScrollChild(msgsBox)
+	rightScroll:HookScript("OnSizeChanged", function()
+		local w = rightScroll:GetWidth()
+		if w and w > 0 then msgsBox:SetWidth(w) end
+	end)
+	msgsBox:SetText(table.concat(GratwurstVIPMessages, "\n"))
+	msgsBox:SetCursorPosition(0)
+	dialog.msgsBox = msgsBox
+
+	-- ── Bottom buttons ────────────────────────────────────────────────────────
+
+	local saveButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+	saveButton:SetSize(100, 28)
+	saveButton:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 25, 20)
+	saveButton:SetText("Save")
+	saveButton:SetScript("OnClick", function()
+		GratwurstVIPNames    = ParseLines(namesBox:GetText())
+		GratwurstVIPMessages = ParseLines(msgsBox:GetText())
+		dialog:Hide()
+	end)
+
+	local cancelButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+	cancelButton:SetSize(80, 28)
+	cancelButton:SetPoint("BOTTOMLEFT", saveButton, "BOTTOMRIGHT", 10, 0)
+	cancelButton:SetText("Cancel")
+	cancelButton:SetScript("OnClick", function()
+		dialog:Hide()
+	end)
+
+	local clearButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+	clearButton:SetSize(80, 28)
+	clearButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -25, 20)
+	clearButton:SetText("Clear All")
+	clearButton:SetScript("OnClick", function()
+		namesBox:SetText("")
+		msgsBox:SetText("")
+	end)
+
+	dialog:Show()
+	namesBox:SetFocus()
+end
+
+function ShowBulkEditDialog()
+	-- Re-use a single instance if it already exists
+	if GratwurstBulkEditDialog then
+		-- Refresh the text with the current messages and re-show
+		local joined = table.concat(GratwurstMessages, "\n")
+		GratwurstBulkEditDialog.inputBox:SetText(joined)
+		GratwurstBulkEditDialog.inputBox:SetCursorPosition(0)
+		GratwurstBulkEditDialog:Show()
+		GratwurstBulkEditDialog.inputBox:SetFocus()
+		return
+	end
+
+	local dialog = CreateFrame("Frame", "GratwurstBulkEditDialogFrame", UIParent, "BackdropTemplate")
+	GratwurstBulkEditDialog = dialog
+	dialog:SetSize(600, 500)
+	dialog:SetPoint("CENTER")
+	dialog:SetFrameStrata("DIALOG")
+	dialog:SetFrameLevel(100)
+	dialog:SetBackdrop({
+		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+		tile = true,
+		tileSize = 16,
+		edgeSize = 32,
+		insets = { left = 8, right = 8, top = 8, bottom = 8 }
+	})
+	dialog:SetBackdropColor(0.0, 0.0, 0.0, 1.0)
+	dialog:SetMovable(true)
+	dialog:EnableMouse(true)
+	dialog:RegisterForDrag("LeftButton")
+	dialog:SetScript("OnDragStart", dialog.StartMoving)
+	dialog:SetScript("OnDragStop", dialog.StopMovingOrSizing)
+
+	-- Title
+	local title = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+	title:SetPoint("TOP", dialog, "TOP", 0, -15)
+	title:SetText("Edit Messages as Text")
+
+	-- Instructions
+	local instructions = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	instructions:SetPoint("TOPLEFT", dialog, "TOPLEFT", 25, -45)
+	instructions:SetWidth(550)
+	instructions:SetJustifyH("LEFT")
+	instructions:SetText("One message per line. Edit, paste, or replace the whole list, then click Save.")
+	instructions:SetTextColor(1, 0.82, 0)
+
+	-- Scroll frame + multiline EditBox
+	local scrollFrame = CreateFrame("ScrollFrame", "GratwurstBulkEditScroll", dialog, "UIPanelScrollFrameTemplate")
+	scrollFrame:SetPoint("TOPLEFT", dialog, "TOPLEFT", 20, -75)
+	scrollFrame:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -36, 60)
+
+	local inputBox = CreateFrame("EditBox", "GratwurstBulkEditInput", scrollFrame)
+	inputBox:SetMultiLine(true)
+	inputBox:SetAutoFocus(false)
+	inputBox:SetFontObject("ChatFontNormal")
+	inputBox:SetWidth(scrollFrame:GetWidth() or 520)
+	inputBox:SetTextColor(1, 1, 1)
+	inputBox:SetScript("OnEscapePressed", function()
+		dialog:Hide()
+	end)
+	scrollFrame:SetScrollChild(inputBox)
+	scrollFrame:HookScript("OnSizeChanged", function()
+		local w = scrollFrame:GetWidth()
+		if w and w > 0 then
+			inputBox:SetWidth(w)
+		end
+	end)
+	dialog.inputBox = inputBox
+
+	-- Populate with current messages
+	local joined = table.concat(GratwurstMessages, "\n")
+	inputBox:SetText(joined)
+	inputBox:SetCursorPosition(0)
+
+	-- Save button
+	local saveButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+	saveButton:SetSize(100, 28)
+	saveButton:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 25, 20)
+	saveButton:SetText("Save")
+	saveButton:SetScript("OnClick", function()
+		local newMessages = ParseLines(inputBox:GetText())
+		if #newMessages > 0 then
+			GratwurstMessages = newMessages
+			SaveMessagesToVariables()
+			RefreshMessageList()
+		end
+		dialog:Hide()
+	end)
+
+	local cancelButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+	cancelButton:SetSize(80, 28)
+	cancelButton:SetPoint("BOTTOMLEFT", saveButton, "BOTTOMRIGHT", 10, 0)
+	cancelButton:SetText("Cancel")
+	cancelButton:SetScript("OnClick", function()
+		dialog:Hide()
+	end)
+
+	dialog:Show()
+	inputBox:SetFocus()
 end
 
 function ShowAddMessageDialog()

@@ -1,3 +1,9 @@
+1.10.0 - Added Special Messages: click the title banner to open a hidden dialog where you can
+         configure per-character messages — those characters get a special message instead of
+         the normal pool when they earn an achievement.
+         Added Edit as Text: bulk-edit your entire message list as plain text, one per line.
+         Fixed: addon could get permanently silenced after a crash or disconnect while a grats
+         was pending. The lock is now always cleared on login.
 1.9.0 - Fixed: grats no longer send if combat starts during the delay window after an achievement fires.
         Fixed: updated deprecated SendChatMessage to C_ChatInfo.SendChatMessage.
         Config panel controls reorganized into a cleaner left-aligned vertical layout.
