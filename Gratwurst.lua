@@ -1209,7 +1209,7 @@ function ShowBulkEditDialog()
 
 	local dialog = CreateFrame("Frame", "GratwurstBulkEditDialogFrame", UIParent, "BackdropTemplate")
 	GratwurstBulkEditDialog = dialog
-	dialog:SetSize(600, 500)
+	dialog:SetSize(920, 500)
 	dialog:SetPoint("CENTER")
 	dialog:SetFrameStrata("DIALOG")
 	dialog:SetFrameLevel(100)
@@ -1241,10 +1241,10 @@ function ShowBulkEditDialog()
 	instructions:SetText("One message per line. Edit, paste, or replace the whole list, then click Save.")
 	instructions:SetTextColor(1, 0.82, 0)
 
-	-- Scroll frame + multiline EditBox
+	-- Scroll frame + multiline EditBox (left portion; helper pane occupies the right)
 	local scrollFrame = CreateFrame("ScrollFrame", "GratwurstBulkEditScroll", dialog, "UIPanelScrollFrameTemplate")
 	scrollFrame:SetPoint("TOPLEFT", dialog, "TOPLEFT", 20, -75)
-	scrollFrame:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -36, 60)
+	scrollFrame:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -336, 60)
 
 	local inputBox = CreateFrame("EditBox", "GratwurstBulkEditInput", scrollFrame)
 	inputBox:SetMultiLine(true)
@@ -1291,6 +1291,50 @@ function ShowBulkEditDialog()
 	cancelButton:SetScript("OnClick", function()
 		dialog:Hide()
 	end)
+
+	-- Placeholder helper pane (right side)
+	local helperFrame = CreateFrame("Frame", nil, dialog, "BackdropTemplate")
+	helperFrame:SetSize(300, 370)
+	helperFrame:SetPoint("TOPRIGHT", dialog, "TOPRIGHT", -25, -50)
+	helperFrame:SetBackdrop({
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		edgeFile = "Interface\\FriendsFrame\\UI-Toast-Border",
+		tile = true,
+		tileSize = 12,
+		edgeSize = 8,
+		insets = { left = 5, right = 3, top = 3, bottom = 3 }
+	})
+
+	local helperTitle = helperFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	helperTitle:SetPoint("TOP", helperFrame, "TOP", 0, -10)
+	helperTitle:SetText("Available Placeholders")
+	helperTitle:SetTextColor(1, 0.82, 0)
+
+	local helperText = helperFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	helperText:SetPoint("TOPLEFT", helperFrame, "TOPLEFT", 15, -35)
+	helperText:SetWidth(270)
+	helperText:SetJustifyH("LEFT")
+	helperText:SetText(
+		"|cFFFFFF00Player Info:|r\n" ..
+		"%c - Character Name\n" ..
+		"%l - Player Level\n" ..
+		"%C - Player Class\n" ..
+		"%L - Levels to Cap\n\n" ..
+		"|cFFFFFF00Guild Info:|r\n" ..
+		"%g - Guild Alias\n" ..
+		"%G - Guild Name\n" ..
+		"%r - Guild Rank\n\n" ..
+		"|cFFFFFF00Achievement:|r\n" ..
+		"%v - Achievement Name\n" ..
+		"#n - Achiever Name\n" ..
+		"#g - Guild Name\n\n" ..
+		"|cFFFFFF00PvP Info:|r\n" ..
+		"#f - Your Faction\n" ..
+		"#e - Enemy Faction\n" ..
+		"#b - Battleground\n\n" ..
+		"|cFFFFFF00Legacy:|r\n" ..
+		"$player - Player Name"
+	)
 
 	dialog:Show()
 	inputBox:SetFocus()
@@ -1427,12 +1471,12 @@ function ShowAddMessageDialog()
 	
 	local cancelButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
 	cancelButton:SetSize(80, 28)
-	cancelButton:SetPoint("BOTTOMLEFT", addButton, "BOTTOMRIGHT", 10, 0)
+	cancelButton:SetPoint("BOTTOMLEFT", saveButton, "BOTTOMRIGHT", 10, 0)
 	cancelButton:SetText("Cancel")
 	cancelButton:SetScript("OnClick", function()
 		dialog:Hide()
 	end)
-	
+
 	-- Close on escape
 	dialog:SetScript("OnKeyDown", function(self, key)
 		if key == "ESCAPE" then
