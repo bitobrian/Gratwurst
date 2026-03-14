@@ -51,7 +51,8 @@ function InitializeSavedVariables(self)
 		GratwurstEnabled = true
 	end
 	GratwurstVariancePercentage = GratwurstVariancePercentage or 50
-	-- Always reset on login — this is transient state and must never carry over from a previous session
+	-- Always reset on load: a timer cannot survive a session boundary, so a
+	-- saved true value would permanently block all sends.
 	GratwurstIsGratzing = false
 	if GratwurstShouldRandomize == nil then
 		GratwurstShouldRandomize = true
@@ -1608,9 +1609,10 @@ local function slashcmd(msg, editbox)
 			DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r Status: Disabled\n")
 		end
 		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r Slash commands:")
-		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw c   -> Open Configuration")
-		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw enable   -> Enable Gratwurst")
-		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw disable  -> Disable Gratwurst")
+		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw c       -> Open Configuration")
+		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw enable  -> Enable Gratwurst")
+		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw disable -> Disable Gratwurst")
+		DEFAULT_CHAT_FRAME:AddMessage("|cffffedbaGratwurst:|r   /gw debug   -> Print state and simulate a grats")
 	elseif (msg == "c") then
 		Settings.OpenToCategory(category.ID, "Gratwurst")
 	elseif (msg == "enable") then
@@ -1622,11 +1624,13 @@ local function slashcmd(msg, editbox)
 	elseif (msg == "debug") then
 		-- output saved variables to chat
 		print("=======================")
-		print("GratwurstDelayInSeconds: " .. GratwurstDelayInSeconds)
-		print("GratwurstRandomDelayMax: " .. GratwurstRandomDelayMax)
 		print("GratwurstEnabled: " .. tostring(GratwurstEnabled))
-		print("GratwurstVariancePercentage: " .. GratwurstVariancePercentage)
 		print("GratwurstIsGratzing: " .. tostring(GratwurstIsGratzing))
+		print("GratwurstRandomDelayMax: " .. GratwurstRandomDelayMax)
+		print("GratwurstDelayInSeconds: " .. GratwurstDelayInSeconds)
+		print("GratwurstVariancePercentage: " .. GratwurstVariancePercentage)
+		print("GratwurstShouldRandomize: " .. tostring(GratwurstShouldRandomize))
+		print("GratwurstMessages count: " .. #GratwurstMessages)
 		GuildAchievementMessageEventReceived(true);
 	end
 end
