@@ -86,6 +86,11 @@ function InitializeSavedVariables(self)
 	-- VIP: per-character name list and their special messages
 	GratwurstVIPNames = GratwurstVIPNames or {}
 	GratwurstVIPMessages = GratwurstVIPMessages or {}
+
+	-- Debug / trace mode: when true, Trace() prints decisions to the chat frame
+	if GratwurstDebug == nil then
+		GratwurstDebug = false
+	end
 end
 
 -- Splits a multi-line string into a trimmed, non-blank list of strings.
@@ -171,11 +176,11 @@ function SetConfigurationWindow()
 		end
 	end
 
-	-- Left-hand controls stack: checkbox → Max Delay slider → Frequency slider
+	-- Left-hand controls stack: checkbox → Max Delay slider → Frequency slider → Debug checkbox
 	local controlsLeft = CreateFrame("Frame", nil, Gratwurst.ui.panel)
 	controlsLeft:SetPoint("TOPLEFT", Gratwurst.ui.panel, "TOPLEFT", UI.PAD_X, -70)
 	controlsLeft:SetWidth(UI.SLIDER_WIDTH)
-	controlsLeft:SetHeight(160)
+	controlsLeft:SetHeight(200)
 
 	-- Checkbox row
 	local randomizeHelpText = "When enabled, Gratwurst picks a random message from your list.\n\nWhen disabled, it always uses the first message (#1) in the list."
@@ -313,9 +318,37 @@ function SetConfigurationWindow()
 		frequencyValueLabel:SetText(GratwurstVariancePercentage .. "%")
 	end)
 
+	-- Debug mode checkbox (below Frequency slider)
+	local debugHelpText = "When enabled, Gratwurst prints a trace to the chat frame for every decision it makes: whether it skips, why it skips, and which message it would send."
+	local debugCheckbox = CreateFrame("CheckButton", "GratwurstDebugCheckbox", controlsLeft, "ChatConfigCheckButtonTemplate")
+	debugCheckbox:SetPoint("TOPLEFT", controlsLeft, "TOPLEFT", 0, -158)
+	debugCheckbox:SetChecked(GratwurstDebug)
+	debugCheckbox:SetScript("OnClick", function(self) GratwurstDebug = self:GetChecked() end)
+	debugCheckbox:SetScript("OnEnter", function(self) ShowTooltip(self, debugHelpText) end)
+	debugCheckbox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+	local debugCheckboxLabel = debugCheckbox:CreateFontString("GratwurstDebugCheckboxLabel")
+	debugCheckboxLabel:SetPoint("LEFT", debugCheckbox, "RIGHT", 4, -1)
+	debugCheckboxLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+	debugCheckboxLabel:SetWidth(UI.SLIDER_WIDTH - 30)
+	debugCheckboxLabel:SetHeight(20)
+	debugCheckboxLabel:SetTextColor(1, 1, 1)
+	debugCheckboxLabel:SetShadowOffset(1, -1)
+	debugCheckboxLabel:SetShadowColor(0, 0, 0)
+	debugCheckboxLabel:SetJustifyH("LEFT")
+	debugCheckboxLabel:SetText("Debug mode")
+
+	local debugCheckboxLabelHitbox = CreateFrame("Frame", nil, controlsLeft)
+	debugCheckboxLabelHitbox:SetPoint("TOPLEFT", debugCheckboxLabel, "TOPLEFT", 0, 4)
+	debugCheckboxLabelHitbox:SetPoint("BOTTOMRIGHT", debugCheckboxLabel, "BOTTOMRIGHT", 0, -4)
+	debugCheckboxLabelHitbox:EnableMouse(true)
+	debugCheckboxLabelHitbox:SetScript("OnEnter", function(self) ShowTooltip(self, debugHelpText) end)
+	debugCheckboxLabelHitbox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+	debugCheckboxLabelHitbox:SetScript("OnMouseUp", function() debugCheckbox:Click() end)
+
 	-- Create the backdrop for the message list
 	local backdropFrame = CreateFrame("Frame", nil, Gratwurst.ui.panel, BackdropTemplateMixin and "BackdropTemplate")
-	backdropFrame:SetPoint("TOPLEFT", UI.PAD_X, -240)
+	backdropFrame:SetPoint("TOPLEFT", UI.PAD_X, -275)
 	backdropFrame:SetPoint("BOTTOMRIGHT", Gratwurst.ui.panel, "BOTTOMRIGHT", -UI.PAD_X, 18)
 	backdropFrame:SetBackdrop( {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -455,6 +488,8 @@ function OnEventReceived(self, event, msg, author, ...)
 	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then		
 		if (author ~= GratwurstUnitName) then
 			GuildAchievementMessageEventReceived(false, author);
+		else
+			Trace("Skipping own achievement (" .. tostring(author) .. ")")
 		end
 	elseif (event == "ADDON_LOADED" and msg == "Gratwurst") then
 		InitializeSavedVariables();
@@ -466,6 +501,7 @@ end
 function GuildAchievementMessageEventReceived(isDebug, author)
 	-- Prevent spam: ignore additional achievements while a gratz is already pending or in-flight
 	if GratwurstIsGratzing then
+		Trace("Skipping: already gratzing (spam guard active)")
 		return
 	end
 
@@ -476,12 +512,23 @@ function GuildAchievementMessageEventReceived(isDebug, author)
 	if random <= GratwurstVariancePercentage then
 		canGrats = true
 	end
+	Trace("Frequency roll: " .. random .. "/" .. GratwurstVariancePercentage .. " -> canGrats=" .. tostring(canGrats))
+
 	GratwurstDelayInSeconds = math.random(1,GratwurstRandomDelayMax)
+	Trace("Delay: " .. GratwurstDelayInSeconds .. "s (max " .. GratwurstRandomDelayMax .. "s), author=" .. tostring(author))
+
     C_Timer.After(GratwurstDelayInSeconds,function()
-		if canGrats and not InCombatLockdown() and GratwurstEnabled then
+		if not GratwurstEnabled then
+			Trace("Skipping: addon is disabled")
+		elseif InCombatLockdown() then
+			Trace("Skipping: in combat lockdown")
+		elseif not canGrats then
+			Trace("Skipping: frequency roll did not pass")
+		else
 			-- VIP check: if the achiever is on the VIP list and VIP messages exist, use those
 			local vipMessage = GetVIPMessageForAuthor(author)
 			if vipMessage then
+				Trace("Sending VIP message for " .. tostring(author) .. ": " .. vipMessage)
 				if isDebug then
 					print("VIP message: " .. vipMessage)
 				else
@@ -489,18 +536,24 @@ function GuildAchievementMessageEventReceived(isDebug, author)
 				end
 			elseif HasAnyNonEmptyMessage() then
 				if GratwurstShouldRandomize then
+					local message = GetRandomMessageFromList(author)
+					Trace("Sending random message (GUILD): " .. message)
 					if isDebug then
-						print("GetRandomMessageFromList(author): " .. GetRandomMessageFromList(author))
+						print("GetRandomMessageFromList(author): " .. message)
 					else
-						C_ChatInfo.SendChatMessage(GetRandomMessageFromList(author), "GUILD")
+						C_ChatInfo.SendChatMessage(message, "GUILD")
 					end
 				else
+					local message = GetTopMessageFromList(author)
+					Trace("Sending top message #1 (GUILD): " .. message)
 					if isDebug then
-						print("GetTopMessageFromList(author): " .. GetTopMessageFromList(author))
+						print("GetTopMessageFromList(author): " .. message)
 					else
-						C_ChatInfo.SendChatMessage(GetTopMessageFromList(author), "GUILD")
+						C_ChatInfo.SendChatMessage(message, "GUILD")
 					end
 				end
+			else
+				Trace("Skipping: no messages configured")
 			end
 		end
 		GratwurstIsGratzing = false
@@ -788,6 +841,15 @@ function Log(message)
 	if(message == nil)then message = "nil";
 	end
 	DEFAULT_CHAT_FRAME:AddMessage(message)
+end
+
+-- Prints a trace message to the chat frame when debug mode is active.
+-- Prefix is "|cff888888[GW]|r" so trace lines are visually distinct from
+-- normal addon output.
+function Trace(message)
+	if not GratwurstDebug then return end
+	if message == nil then message = "nil" end
+	DEFAULT_CHAT_FRAME:AddMessage("|cff888888[GW]|r " .. message)
 end
 
 function lines(str)
@@ -1669,6 +1731,7 @@ local function slashcmd(msg, editbox)
 		-- output saved variables to chat
 		print("=======================")
 		print("GratwurstEnabled: " .. tostring(GratwurstEnabled))
+		print("GratwurstDebug: " .. tostring(GratwurstDebug))
 		print("GratwurstIsGratzing: " .. tostring(GratwurstIsGratzing))
 		print("GratwurstRandomDelayMax: " .. GratwurstRandomDelayMax)
 		print("GratwurstDelayInSeconds: " .. GratwurstDelayInSeconds)
