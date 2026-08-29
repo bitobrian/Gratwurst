@@ -535,6 +535,8 @@ function OnEventReceived(self, event, msg, author, ...)
 				achievementName = GetAchievementNameFromChatMessage(msg)
 			end
 			GuildAchievementMessageEventReceived(false, author, achievementName);
+		else
+			Trace("Skipping own achievement (" .. tostring(author) .. ")")
 		end
 	elseif (event == "ADDON_LOADED" and msg == "Gratwurst") then
 		InitializeSavedVariables();
@@ -563,21 +565,78 @@ function GuildAchievementMessageEventReceived(isDebug, author, achievementName)
 	Trace("Delay: " .. GratwurstDelayInSeconds .. "s (max " .. GratwurstRandomDelayMax .. "s), author=" .. tostring(author))
 
     C_Timer.After(GratwurstDelayInSeconds,function()
-		if canGrats and not IsChatSendRestricted() and GratwurstEnabled and HasAnyNonEmptyMessage() then
-			local message
-			if GratwurstShouldRandomize then
-				message = GetRandomMessageFromList(author, achievementName)
+		if not GratwurstEnabled then
+			Trace("Skipping: addon is disabled")
+		elseif IsChatSendRestricted() then
+			Trace("Skipping: chat send restricted")
+		elseif not canGrats then
+			Trace("Skipping: frequency roll did not pass")
+		else
+			local vipMessage = GetVIPMessageForAuthor(author, achievementName)
+			if vipMessage then
+				Trace("Sending VIP message for " .. tostring(author) .. ": " .. vipMessage)
+				if isDebug then
+					print("VIP message: " .. vipMessage)
+				else
+					C_ChatInfo.SendChatMessage(vipMessage, "GUILD")
+				end
+			elseif HasAnyNonEmptyMessage() then
+				local message
+				if GratwurstShouldRandomize then
+					message = GetRandomMessageFromList(author, achievementName)
+					Trace("Sending random message (GUILD): " .. message)
+				else
+					message = GetTopMessageFromList(author, achievementName)
+					Trace("Sending top message #1 (GUILD): " .. message)
+				end
+				if isDebug then
+					print("ResolveMessage(): " .. message)
+				else
+					C_ChatInfo.SendChatMessage(message, "GUILD")
+				end
 			else
-				message = GetTopMessageFromList(author, achievementName)
-			end
-			if isDebug then
-				print("ResolveMessage(): " .. message)
-			else
-				C_ChatInfo.SendChatMessage(message, "GUILD")
+				Trace("Skipping: no messages configured")
 			end
 		end
 		GratwurstIsGratzing = false
     end)
+end
+
+-- Returns a processed VIP message if the author is on the VIP names list and VIP messages
+-- are configured, otherwise returns nil so the normal pool is used.
+function GetVIPMessageForAuthor(author, achievementName)
+	if not author or type(GratwurstVIPNames) ~= "table" or #GratwurstVIPNames == 0 then
+		return nil
+	end
+	if type(GratwurstVIPMessages) ~= "table" or #GratwurstVIPMessages == 0 then
+		return nil
+	end
+
+	-- author arrives as "Name-Realm"; compare case-insensitively against stored names
+	-- which may be bare names ("Taco") or name-realm ("Taco-Realm").
+	local authorLower = author:lower()
+	local authorName  = authorLower:match("^([^%-]+)") or authorLower
+
+	local isVIP = false
+	for _, vipEntry in ipairs(GratwurstVIPNames) do
+		local entryLower = vipEntry:lower():match("^%s*(.-)%s*$")
+		if entryLower == authorLower or entryLower == authorName then
+			isVIP = true
+			break
+		end
+	end
+
+	if not isVIP then
+		return nil
+	end
+
+	local idx = math.random(1, #GratwurstVIPMessages)
+	local message = GratwurstVIPMessages[idx]
+	local result = FindAndReplacePlayerNameToken(message, author, achievementName)
+	if not result or not result:match("%S") then
+		return nil
+	end
+	return result
 end
 
 function GetTopMessageFromList(author, achievementName)
