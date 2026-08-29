@@ -1,3 +1,9 @@
+1.11.0 - Ready for World of Warcraft 12.1.
+         Fixed: congratulation messages no longer try to send during raids,
+         Mythic+, or PvP when the game blocks addon chat. That was causing
+         error popups even when you were not in combat.
+         Messages that use %v or #v now include the actual achievement name.
+         Level previews now match Midnight’s level cap (90).
 1.10.0 - Added Special Messages: click the title banner to open a hidden dialog where you can
          configure per-character messages — those characters get a special message instead of
          the normal pool when they earn an achievement.

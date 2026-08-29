@@ -23,6 +23,45 @@ local UI = {
 	BTN_RIGHT_PAD = 6,
 }
 
+local function IsSecretValue(value)
+	return type(issecretvalue) == "function" and issecretvalue(value) == true
+end
+
+-- InCombatLockdown is only combat. Midnight also blocks addon chat in
+-- encounters, M+, PvP, and communication-restricted maps.
+local function IsChatSendRestricted()
+	if InCombatLockdown() then
+		return true
+	end
+	if C_ChatInfo and C_ChatInfo.InChatMessagingLockdown then
+		return C_ChatInfo.InChatMessagingLockdown()
+	end
+	return false
+end
+
+local function GetCurrentMaxPlayerLevel()
+	local maxLevel = GetMaxPlayerLevel()
+	if type(maxLevel) == "number" and maxLevel > 0 then
+		return maxLevel
+	end
+	return 90
+end
+
+local PREVIEW_AUTHOR = "JohnnyAwesome-TestRealm"
+
+local function GetExampleAchievementName()
+	return "Level " .. tostring(GetCurrentMaxPlayerLevel())
+end
+
+-- CHAT_MSG_GUILD_ACHIEVEMENT text embeds |Hachievement:...|h[Name]|h
+-- Lua patterns: %] is a literal ]. (.-) captures the name, including %.
+local function GetAchievementNameFromChatMessage(msg)
+	if type(msg) ~= "string" then
+		return nil
+	end
+	return msg:match("|Hachievement:.-|h%[(.-)%]|h")
+end
+
 function InitializeAddon(self)
 	self:RegisterEvent("CHAT_MSG_GUILD_ACHIEVEMENT")
 	self:RegisterEvent("PLAYER_LOGIN")
@@ -123,27 +162,27 @@ function SetConfigurationWindow()
 	local parent = SettingsPanel or InterfaceOptionsFramePanelContainer or UIParent
 	local luaFrame = CreateFrame("Frame", "GratwurstPanel", parent)
 
-	local titleBorder = luaFrame:CreateTexture("UnneccessaryGlobalFrameNameTitleBorder")
-	titleBorder:SetWidth(320)
-	titleBorder:SetHeight(50)
-	titleBorder:SetPoint("TOP", luaFrame, "TOP", 0, 5)
-	titleBorder:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
-	titleBorder:SetTexCoord(.2, .8, 0, .6)
-
 	local titleString = luaFrame:CreateFontString("UnneccessaryGlobalFrameNameTitleString")
 	titleString:SetFont("Fonts\\FRIZQT__.TTF", 15)
-	titleString:SetWidth(320)
+	titleString:SetWordWrap(false)
+	titleString:SetMaxLines(1)
 	titleString:SetPoint("TOP", luaFrame, "TOP", 0, -13)
 	titleString:SetTextColor(1, 0.8196079, 0)
 	titleString:SetShadowOffset(1, -1)
 	titleString:SetShadowColor(0, 0, 0)
 	titleString:SetText(ConfigTitle)
 
+	local titleBorder = luaFrame:CreateTexture("UnneccessaryGlobalFrameNameTitleBorder")
+	titleBorder:SetHeight(50)
+	titleBorder:SetPoint("TOP", luaFrame, "TOP", 0, 5)
+	titleBorder:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
+	titleBorder:SetTexCoord(.2, .8, 0, .6)
+
 	-- Hidden clickable overlay on the title banner — opens the VIP special-messages dialog.
 	-- No label, no visible hint; the cursor just changes to the hand on hover.
 	local titleHitbox = CreateFrame("Button", nil, luaFrame)
 	titleHitbox:SetPoint("TOP", luaFrame, "TOP", 0, 5)
-	titleHitbox:SetSize(320, 50)
+	titleHitbox:SetHeight(50)
 	titleHitbox:SetScript("OnClick", function()
 		ShowVIPDialog()
 	end)
@@ -153,6 +192,18 @@ function SetConfigurationWindow()
 	titleHitbox:SetScript("OnLeave", function()
 		titleString:SetTextColor(1, 0.8196079, 0)
 	end)
+
+	-- Header art has ornate ends; pad so the title stays inside and on one line.
+	local TITLE_BANNER_PAD = 80
+	local TITLE_BANNER_MIN_WIDTH = 320
+	local function SizeTitleBanner()
+		local textWidth = titleString:GetStringWidth() or 0
+		local bannerWidth = math.max(TITLE_BANNER_MIN_WIDTH, math.ceil(textWidth + TITLE_BANNER_PAD))
+		titleBorder:SetWidth(bannerWidth)
+		titleHitbox:SetSize(bannerWidth, 50)
+	end
+	SizeTitleBanner()
+	luaFrame:HookScript("OnShow", SizeTitleBanner)
 
 	Gratwurst = {};
 	Gratwurst.ui = {};
@@ -485,9 +536,17 @@ function OnEventReceived(self, event, msg, author, ...)
 		if (GratwurstUnitName == nil or strfind(GratwurstUnitName, " ")) then
 			GratwurstUnitName = strjoin("-", UnitName("player"), GetNormalizedRealmName())
 		end;
-	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then		
+	elseif (event == "CHAT_MSG_GUILD_ACHIEVEMENT") then
+		-- Secret authors cannot be compared or gsub'd; skip rather than error.
+		if IsSecretValue(author) then
+			return
+		end
 		if (author ~= GratwurstUnitName) then
-			GuildAchievementMessageEventReceived(false, author);
+			local achievementName
+			if not IsSecretValue(msg) then
+				achievementName = GetAchievementNameFromChatMessage(msg)
+			end
+			GuildAchievementMessageEventReceived(false, author, achievementName);
 		else
 			Trace("Skipping own achievement (" .. tostring(author) .. ")")
 		end
@@ -498,7 +557,7 @@ function OnEventReceived(self, event, msg, author, ...)
 	end
 end
 
-function GuildAchievementMessageEventReceived(isDebug, author)
+function GuildAchievementMessageEventReceived(isDebug, author, achievementName)
 	-- Prevent spam: ignore additional achievements while a gratz is already pending or in-flight
 	if GratwurstIsGratzing then
 		Trace("Skipping: already gratzing (spam guard active)")
@@ -520,13 +579,12 @@ function GuildAchievementMessageEventReceived(isDebug, author)
     C_Timer.After(GratwurstDelayInSeconds,function()
 		if not GratwurstEnabled then
 			Trace("Skipping: addon is disabled")
-		elseif InCombatLockdown() then
-			Trace("Skipping: in combat lockdown")
+		elseif IsChatSendRestricted() then
+			Trace("Skipping: chat send restricted")
 		elseif not canGrats then
 			Trace("Skipping: frequency roll did not pass")
 		else
-			-- VIP check: if the achiever is on the VIP list and VIP messages exist, use those
-			local vipMessage = GetVIPMessageForAuthor(author)
+			local vipMessage = GetVIPMessageForAuthor(author, achievementName)
 			if vipMessage then
 				Trace("Sending VIP message for " .. tostring(author) .. ": " .. vipMessage)
 				if isDebug then
@@ -535,22 +593,18 @@ function GuildAchievementMessageEventReceived(isDebug, author)
 					C_ChatInfo.SendChatMessage(vipMessage, "GUILD")
 				end
 			elseif HasAnyNonEmptyMessage() then
+				local message
 				if GratwurstShouldRandomize then
-					local message = GetRandomMessageFromList(author)
+					message = GetRandomMessageFromList(author, achievementName)
 					Trace("Sending random message (GUILD): " .. message)
-					if isDebug then
-						print("GetRandomMessageFromList(author): " .. message)
-					else
-						C_ChatInfo.SendChatMessage(message, "GUILD")
-					end
 				else
-					local message = GetTopMessageFromList(author)
+					message = GetTopMessageFromList(author, achievementName)
 					Trace("Sending top message #1 (GUILD): " .. message)
-					if isDebug then
-						print("GetTopMessageFromList(author): " .. message)
-					else
-						C_ChatInfo.SendChatMessage(message, "GUILD")
-					end
+				end
+				if isDebug then
+					print("ResolveMessage(): " .. message)
+				else
+					C_ChatInfo.SendChatMessage(message, "GUILD")
 				end
 			else
 				Trace("Skipping: no messages configured")
@@ -562,8 +616,8 @@ end
 
 -- Returns a processed VIP message if the author is on the VIP names list and VIP messages
 -- are configured, otherwise returns nil so the normal pool is used.
-function GetVIPMessageForAuthor(author)
-	if type(GratwurstVIPNames) ~= "table" or #GratwurstVIPNames == 0 then
+function GetVIPMessageForAuthor(author, achievementName)
+	if not author or type(GratwurstVIPNames) ~= "table" or #GratwurstVIPNames == 0 then
 		return nil
 	end
 	if type(GratwurstVIPMessages) ~= "table" or #GratwurstVIPMessages == 0 then
@@ -588,31 +642,29 @@ function GetVIPMessageForAuthor(author)
 		return nil
 	end
 
-	-- Pick a random VIP message and expand placeholders
 	local idx = math.random(1, #GratwurstVIPMessages)
 	local message = GratwurstVIPMessages[idx]
-	local result = FindAndReplacePlayerNameToken(message, author)
-	-- Guard against a blank result so the normal pool is used as fallback
+	local result = FindAndReplacePlayerNameToken(message, author, achievementName)
 	if not result or not result:match("%S") then
 		return nil
 	end
 	return result
 end
 
-function GetTopMessageFromList(author)
+function GetTopMessageFromList(author, achievementName)
 	local message = GratwurstMessages[1] or "Gratz $player!"
 
 	if author ~= nil then
-		message = FindAndReplacePlayerNameToken(message, author)
+		message = FindAndReplacePlayerNameToken(message, author, achievementName)
 	else
 		-- we're debugging because author is nil since the event isn't fired
-		message = FindAndReplacePlayerNameToken(message, "Taco-RealmOfNightmares")
+		message = FindAndReplacePlayerNameToken(message, "Taco-RealmOfNightmares", achievementName)
 	end
 
 	return message
 end
 
-function GetRandomMessageFromList(author)
+function GetRandomMessageFromList(author, achievementName)
 	local index = #GratwurstMessages
 	if index == 0 then
 		return "Gratz $player!"
@@ -622,38 +674,39 @@ function GetRandomMessageFromList(author)
 	local message = GratwurstMessages[value]
 
 	if author ~= nil then
-		message = FindAndReplacePlayerNameToken(message, author)
+		message = FindAndReplacePlayerNameToken(message, author, achievementName)
 	else
 		-- we're debugging because author is nil since the event isn't fired
-		message = FindAndReplacePlayerNameToken(message, "Taco-RealmOfNightmares")
+		message = FindAndReplacePlayerNameToken(message, "Taco-RealmOfNightmares", achievementName)
 	end
 
 	return message
 end
 
-function FindAndReplacePlayerNameToken(message, author)
+function FindAndReplacePlayerNameToken(message, author, achievementName)
 	local result = message
 	
 	-- Always use advanced placeholders (Lancaban mode is now default)
-	result = ReplaceLancabanPlaceholders(result, author)
+	result = ReplaceLancabanPlaceholders(result, author, achievementName)
 	
 	return result
 end
 
-function ReplaceLancabanPlaceholders(message, author)
+function ReplaceLancabanPlaceholders(message, author, achievementName)
 	local result = message
 	local playerName = string.gsub(author, "%-.*", "")
 	
 	-- Check if this is for preview (test data)
-	local isPreview = (author == "JohnnyAwesome-TestRealm")
+	local isPreview = (author == PREVIEW_AUTHOR)
 	
 	if isPreview then
 		-- Use example data for preview
-		local exampleLevel = 80
+		local maxLevel = GetCurrentMaxPlayerLevel()
+		local exampleLevel = maxLevel
 		local exampleClass = "Paladin"
 		local exampleGuildName = "Awesome Guild"
 		local exampleGuildRank = "Member"
-		local maxLevel = 80
+		local exampleAchievement = achievementName or ("Level " .. tostring(maxLevel))
 		
 		-- %c - Character Name
 		result = string.gsub(result, "%%c", playerName)
@@ -684,7 +737,7 @@ function ReplaceLancabanPlaceholders(message, author)
 		result = string.gsub(result, "%%r", exampleGuildRank)
 		
 		-- %v - achievement (example)
-		result = string.gsub(result, "%%v", "Level 80")
+		result = string.gsub(result, "%%v", exampleAchievement)
 		
 		-- %g - guild alias (short guild name)
 		local guildAlias = string.sub(exampleGuildName, 1, 10)
@@ -710,7 +763,7 @@ function ReplaceLancabanPlaceholders(message, author)
 		result = string.gsub(result, "#b", "Warsong Gulch")
 		
 		-- #v - achievement name (example)
-		result = string.gsub(result, "#v", "Level 80")
+		result = string.gsub(result, "#v", exampleAchievement)
 		
 		-- Legacy $player support
 		result = string.gsub(result, "$player", playerName)
@@ -743,7 +796,7 @@ function ReplaceLancabanPlaceholders(message, author)
 		
 		-- %L - levels left to cap
 		if level and level > 0 then
-			local maxLevel = GetMaxPlayerLevel() or 80
+			local maxLevel = GetCurrentMaxPlayerLevel()
 			local levelsLeft = math.max(0, maxLevel - level)
 			result = string.gsub(result, "%%L", tostring(levelsLeft))
 		else
@@ -764,8 +817,12 @@ function ReplaceLancabanPlaceholders(message, author)
 			result = string.gsub(result, "%%r", "")
 		end
 		
-		-- %v - achievement (placeholder for now, would need achievement data from event)
-		result = string.gsub(result, "%%v", "their achievement")
+		-- %v - achievement name from the chat hyperlink when available
+		if achievementName and achievementName ~= "" then
+			result = string.gsub(result, "%%v", achievementName)
+		else
+			result = string.gsub(result, "%%v", "their achievement")
+		end
 		
 		-- %g - guild alias (short guild name)
 		if guildName and guildName ~= "" then
@@ -804,8 +861,8 @@ function ReplaceLancabanPlaceholders(message, author)
 		-- #b - Name of the battleground (would need battleground context)
 		result = string.gsub(result, "#b", "")
 		
-		-- #v - achievement name (would need achievement data from event)
-		result = string.gsub(result, "#v", "")
+		-- #v - achievement name from the chat hyperlink when available
+		result = string.gsub(result, "#v", achievementName or "")
 		
 		-- Legacy $player support
 		result = string.gsub(result, "$player", playerName)
@@ -1467,7 +1524,7 @@ function ShowAddMessageDialog()
 	inputBox:SetScript("OnTextChanged", function(self)
 		local text = self:GetText()
 		if text and text ~= "" then
-			local preview = ReplaceLancabanPlaceholders(text, "JohnnyAwesome-TestRealm")
+			local preview = ReplaceLancabanPlaceholders(text, PREVIEW_AUTHOR, GetExampleAchievementName())
 			previewText:SetText(preview)
 		else
 			previewText:SetText("Gratz JohnnyAwesome!")
@@ -1609,7 +1666,7 @@ function ShowEditMessageDialog(index, currentMessage)
 	previewText:SetPoint("TOPLEFT", previewLabel, "BOTTOMLEFT", 0, -5)
 	previewText:SetWidth(350)
 	previewText:SetJustifyH("LEFT")
-	local initialPreview = ReplaceLancabanPlaceholders(currentMessage, "JohnnyAwesome-TestRealm")
+	local initialPreview = ReplaceLancabanPlaceholders(currentMessage, PREVIEW_AUTHOR, GetExampleAchievementName())
 	previewText:SetText(initialPreview)
 	previewText:SetTextColor(0.5, 1, 0.5)
 	
@@ -1617,7 +1674,7 @@ function ShowEditMessageDialog(index, currentMessage)
 	inputBox:SetScript("OnTextChanged", function(self)
 		local text = self:GetText()
 		if text and text ~= "" then
-			local preview = ReplaceLancabanPlaceholders(text, "JohnnyAwesome-TestRealm")
+			local preview = ReplaceLancabanPlaceholders(text, PREVIEW_AUTHOR, GetExampleAchievementName())
 			previewText:SetText(preview)
 		else
 			previewText:SetText("Gratz JohnnyAwesome!")
@@ -1738,7 +1795,8 @@ local function slashcmd(msg, editbox)
 		print("GratwurstVariancePercentage: " .. GratwurstVariancePercentage)
 		print("GratwurstShouldRandomize: " .. tostring(GratwurstShouldRandomize))
 		print("GratwurstMessages count: " .. #GratwurstMessages)
-		GuildAchievementMessageEventReceived(true);
+		print("IsChatSendRestricted: " .. tostring(IsChatSendRestricted()))
+		GuildAchievementMessageEventReceived(true, nil, GetExampleAchievementName());
 	end
 end
 
