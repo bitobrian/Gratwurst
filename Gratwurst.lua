@@ -162,27 +162,27 @@ function SetConfigurationWindow()
 	local parent = SettingsPanel or InterfaceOptionsFramePanelContainer or UIParent
 	local luaFrame = CreateFrame("Frame", "GratwurstPanel", parent)
 
-	local titleBorder = luaFrame:CreateTexture("UnneccessaryGlobalFrameNameTitleBorder")
-	titleBorder:SetWidth(320)
-	titleBorder:SetHeight(50)
-	titleBorder:SetPoint("TOP", luaFrame, "TOP", 0, 5)
-	titleBorder:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
-	titleBorder:SetTexCoord(.2, .8, 0, .6)
-
 	local titleString = luaFrame:CreateFontString("UnneccessaryGlobalFrameNameTitleString")
 	titleString:SetFont("Fonts\\FRIZQT__.TTF", 15)
-	titleString:SetWidth(320)
+	titleString:SetWordWrap(false)
+	titleString:SetMaxLines(1)
 	titleString:SetPoint("TOP", luaFrame, "TOP", 0, -13)
 	titleString:SetTextColor(1, 0.8196079, 0)
 	titleString:SetShadowOffset(1, -1)
 	titleString:SetShadowColor(0, 0, 0)
 	titleString:SetText(ConfigTitle)
 
+	local titleBorder = luaFrame:CreateTexture("UnneccessaryGlobalFrameNameTitleBorder")
+	titleBorder:SetHeight(50)
+	titleBorder:SetPoint("TOP", luaFrame, "TOP", 0, 5)
+	titleBorder:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
+	titleBorder:SetTexCoord(.2, .8, 0, .6)
+
 	-- Hidden clickable overlay on the title banner — opens the VIP special-messages dialog.
 	-- No label, no visible hint; the cursor just changes to the hand on hover.
 	local titleHitbox = CreateFrame("Button", nil, luaFrame)
 	titleHitbox:SetPoint("TOP", luaFrame, "TOP", 0, 5)
-	titleHitbox:SetSize(320, 50)
+	titleHitbox:SetHeight(50)
 	titleHitbox:SetScript("OnClick", function()
 		ShowVIPDialog()
 	end)
@@ -192,6 +192,18 @@ function SetConfigurationWindow()
 	titleHitbox:SetScript("OnLeave", function()
 		titleString:SetTextColor(1, 0.8196079, 0)
 	end)
+
+	-- Header art has ornate ends; pad so the title stays inside and on one line.
+	local TITLE_BANNER_PAD = 80
+	local TITLE_BANNER_MIN_WIDTH = 320
+	local function SizeTitleBanner()
+		local textWidth = titleString:GetStringWidth() or 0
+		local bannerWidth = math.max(TITLE_BANNER_MIN_WIDTH, math.ceil(textWidth + TITLE_BANNER_PAD))
+		titleBorder:SetWidth(bannerWidth)
+		titleHitbox:SetSize(bannerWidth, 50)
+	end
+	SizeTitleBanner()
+	luaFrame:HookScript("OnShow", SizeTitleBanner)
 
 	Gratwurst = {};
 	Gratwurst.ui = {};
